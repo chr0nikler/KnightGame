@@ -3,32 +3,9 @@ package mygame;
 import XMLReader.*;
 import com.jme3.app.SimpleApplication;
 import com.jme3.bullet.BulletAppState;
-import com.jme3.bullet.collision.shapes.BoxCollisionShape;
-import com.jme3.bullet.collision.shapes.CapsuleCollisionShape;
-import com.jme3.bullet.control.CharacterControl;
-import com.jme3.bullet.control.GhostControl;
-import com.jme3.bullet.control.RigidBodyControl;
-import com.jme3.input.KeyInput;
-import com.jme3.input.controls.ActionListener;
-import com.jme3.input.controls.KeyTrigger;
-import com.jme3.material.Material;
-import com.jme3.math.ColorRGBA;
-import com.jme3.math.Vector2f;
-import com.jme3.math.Vector3f;
-import com.jme3.math.Vector4f;
-import com.jme3.scene.Geometry;
-import com.jme3.scene.Node;
-import com.jme3.scene.shape.Quad;
 import com.jme3.system.AppSettings;
-import com.jme3.system.lwjgl.LwjglTimer;
-import com.jme3.texture.Texture2D;
-import java.awt.image.BufferedImage;
 import java.util.Vector;
-import tonegod.gui.controls.text.Label;
-import tonegod.gui.controls.windows.Panel;
-import tonegod.gui.core.Element;
 import tonegod.gui.core.Screen;
-import tonegod.gui.effects.Effect;
 //import tonegod.gui.core.Screen;
 
 public class Main extends SimpleApplication {
@@ -47,15 +24,39 @@ public class Main extends SimpleApplication {
        
     }
     
+    BulletAppState bas;
     static SpriteEngine engine = new SpriteEngine();
-    static LevelState level_state = new LevelState();
-    static MainMenuState main_menu_state = new MainMenuState();
+    public static String[] levels = {"testMap.tmx","testMap2.tmx"};
+    public static int level_count = 0;
+    public static float current_time  = 0f;
+    public static String[] titles = {"Take a step of faith", "Take a leap of faith"};
+    
+    
+    static float tlratio;
+    private Screen screen;
+    
     @Override
     
     public void simpleInitApp() {
        
         
+        cam.setParallelProjection(true);
+        tlratio = cam.getFrustumLeft()/cam.getFrustumTop();
+        cam.setFrustumTop(5);
+        cam.setFrustumBottom(-5f);
+        cam.setFrustumLeft(cam.getFrustumTop() * tlratio);
+        cam.setFrustumRight(cam.getFrustumTop() * -(tlratio));
+        cam.update();
+        getFlyByCamera().setEnabled(false);
+        getInputManager().setCursorVisible(false);
+        bas = new BulletAppState();
+        stateManager.attach(bas);
+        bas.setDebugEnabled(false);    
         
+        screen = new Screen(this);
+        guiNode.addControl(screen);
+        
+        MainMenuState main_menu_state = new MainMenuState(screen);
         
         stateManager.attach(main_menu_state);
         

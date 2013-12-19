@@ -39,10 +39,8 @@ import java.awt.image.BufferedImage;
 import java.util.Vector;
 import static mygame.Main.engine;
 import tonegod.gui.controls.text.Label;
-import tonegod.gui.controls.windows.Panel;
 import tonegod.gui.core.Element;
 import tonegod.gui.core.Screen;
-import tonegod.gui.effects.Effect;
 
 /**
  *
@@ -69,6 +67,10 @@ public class LevelState extends AbstractAppState {
     float tlratio;
     private Node death_node;
     
+    Vector3f start;
+    Vector3f end;
+    Node ending_node;
+    
     private ReadXMLFile rxf;
     
     SimpleApplication app;
@@ -77,120 +79,152 @@ public class LevelState extends AbstractAppState {
     Node rootNode;
     Node guiNode;
     Camera cam;
+    Screen screen;
+    
+    Element time_info_l;
+    Element word;
+    String[] words;
+    Element[] title_elements;
 
+    LevelState(Screen screen){
+        this.screen = screen;
+        this.time_l = (Label)screen.getElementById("time");
+        this.time_info_l = screen.getElementById("time_info");
+    }
     
     @Override
     public void initialize(AppStateManager stateManager, Application app) {
         super.initialize(stateManager, app);
         
-        System.out.println(app);
         this.app = (SimpleApplication)app;
         this.stateManager = stateManager;
         this.assetManager = this.app.getAssetManager();
         this.cam = this.app.getCamera();
         this.rootNode = this.app.getRootNode();
         this.guiNode = this.app.getGuiNode();
+        this.bas = this.stateManager.getState(BulletAppState.class);
+        
+        
+       
         
         generalSetup();
         
-        setupPlayer();
+        createTitle();
         
         //createMappings();
         
-        rxf = new ReadXMLFile("Textures/testMap.tmx",assetManager,bas);
+        rxf = new ReadXMLFile("assets/Textures/" + Main.levels[Main.level_count],assetManager,bas);
         rxf.parse();
         l = rxf.createLevel(cam);
+        
+        start = rxf.getStart();
+        end = rxf.getEnd();
                            
         rootNode.attachChild(l);
         
         setupCollidables();
         
+        setupPlayer();
+        
         createMappings();
 
         game_timer = new LwjglTimer();
-        
-        System.out.println(this.app);
-        /*Screen screen = new Screen(this.app);
-        guiNode.addControl(screen);
-        
-        Element time_info_l = new Element(screen, "label",new Vector2f(0,0),new Vector2f(190,0),
-                new Vector4f(5,5,5,5),"Textures/Sprite.png");
-        time_info_l.setPosition(cam.getWidth()/2f - time_info_l.getWidth()/2f, 10f);
-        time_info_l.setText("Seconds since start:");
-        time_info_l.setFontColor(ColorRGBA.White);
-        time_info_l.setFontSize(Math.abs(tlratio) * 15);
 
-        time_l = new Label(screen, "time", new Vector2f(0,0),new Vector2f(70,0));
-        time_l.setPosition(time_info_l.getPosition().x + time_info_l.getWidth(),10);
-        time_l.setFontColor(ColorRGBA.White);
-        time_l.setFontSize(Math.abs(tlratio) * 15);
-        
-        Effect effect = new Effect(
-            Effect.EffectType.FadeIn, // The type of effect to use
-            Effect.EffectEvent.Show, // The event that the effect is associated with
-            10f // The duration of time over which the effect executes (2.2 seconds)
-        ); 
-        
-        time_info_l.addEffect(effect);
-        time_info_l.hide();
-  
-        //screen.getEffectManager().applyEffect(effect);
-        
-
-        screen.addElement(time_l);
-        screen.addElement(time_info_l);
         
         
-        
-        time_info_l.showWithEffect();*/
-        
+       
         //TODO: initialize your AppState, e.g. attach spatials to rootNode
         //this is called on the OpenGL thread after the AppState has been attached
     }
     
     @Override
     public void update(float tpf) {
-         /*try{
-            time_l.setText((String)(Float.toString(game_timer.getTimeInSeconds()).subSequence(0, 5)));
-        } catch(Exception e) {
-            time_l.setText((String)(Float.toString(game_timer.getTimeInSeconds()).subSequence(0, 3)));
-        }*/
-        //game_timer.update();
+        if(stateManager.getState(LevelState.class).isEnabled()){
+            try{
+               time_l.setText((String)(Float.toString(game_timer.getTimeInSeconds() + Main.current_time)).subSequence(0, 5));
+           } catch(Exception e) {
+               time_l.setText((String)(Float.toString(game_timer.getTimeInSeconds() +  Main.current_time)).subSequence(0, 3));
+           }
         
-        walkDirection.set(0, 0, 0);
-        
-        if (left)  walkDirection = new Vector3f(-.1f,0f,0f);
-        if (right) walkDirection = new Vector3f(.1f,0f,0f);
+            //game_timer.update();
 
-        player_character.setWalkDirection(walkDirection);
-        
-        for(int i = 0; i < l.getChildren().size(); i++){
-            if(((Node)l.getChild(i)).getChildren().size()==2){
-                if(!((Node)((Node)l.getChild(i)).getChild(1)).getControl(GhostControl.class).getOverlappingObjects().isEmpty()){
-                    
-                    Texture2D t = (Texture2D) assetManager.loadTexture("Textures/Tiles/ground.png");
-                    ((Geometry)((Node)l.getChild(i)).getChild(0)).getMaterial().setTexture("ColorMap", t);
-                }
-            }
-        }
+            walkDirection.set(0, 0, 0);
 
-        if(!death_node.getControl(GhostControl.class).getOverlappingObjects().isEmpty()){
-            playerNode.getControl(CharacterControl.class).setPhysicsLocation(new Vector3f(cam.getFrustumLeft()+1,-2,0));
+            if (left)  walkDirection = new Vector3f(-.1f,0f,0f);
+            if (right) walkDirection = new Vector3f(.1f,0f,0f);
+
+            player_character.setWalkDirection(walkDirection);
+
             for(int i = 0; i < l.getChildren().size(); i++){
                 if(((Node)l.getChild(i)).getChildren().size()==2){
-
-                    Texture2D t = (Texture2D) assetManager.loadTexture("Textures/Tiles/transparent.png");
-                    ((Geometry)((Node)l.getChild(i)).getChild(0)).getMaterial().setTexture("ColorMap", t);
-                    
+                    if(!((Node)((Node)l.getChild(i)).getChild(1)).getControl(GhostControl.class).getOverlappingObjects().isEmpty()){
+                        Texture2D t = (Texture2D) assetManager.loadTexture("Textures/Tiles/ground.png");
+                        ((Geometry)((Node)l.getChild(i)).getChild(0)).getMaterial().setTexture("ColorMap", t);
+                    }
                 }
             }
+
+            if(!death_node.getControl(GhostControl.class).getOverlappingObjects().isEmpty()){
+                playerNode.getControl(CharacterControl.class).setPhysicsLocation(start);
+                for(int i = 0; i < l.getChildren().size(); i++){
+                    if(((Node)l.getChild(i)).getChildren().size()==2){
+
+                        Texture2D t = (Texture2D) assetManager.loadTexture("Textures/Tiles/transparent.png");
+                        ((Geometry)((Node)l.getChild(i)).getChild(0)).getMaterial().setTexture("ColorMap", t);
+
+                    }
+                }
+
+            }
+
+            if(!ending_node.getControl(GhostControl.class).getOverlappingObjects().isEmpty()){
+                Main.level_count +=1;
+                stateManager.detach(stateManager.getState(LevelState.class));
+            }
+        }
+    }
+    
+    @Override
+    public void setEnabled(boolean active){
+        super.setEnabled(active);
         
+        if(!active){
+            app.getInputManager().removeListener(actionListener);
+            Main.current_time = Float.parseFloat(time_l.getText());
+            PauseState pause_state = new PauseState(screen);
+            stateManager.attach(pause_state);
+            player_character.setEnabled(false);
+            left = false;
+            right = false;
+            
+        } else {
+            createMappings();
+            game_timer.reset();
+            player_character.setEnabled(true);
         }
     }
     
     @Override
     public void cleanup() {
         super.cleanup();
+        
+        stateManager.detach(bas);
+        bas = new BulletAppState();
+        stateManager.attach(bas);
+        bas.setDebugEnabled(false);
+        rootNode.detachAllChildren();
+        
+        for(int i = 0; i < title_elements.length; i++){
+            screen.removeElement(title_elements[i]);
+        }
+        
+        Main.current_time = Float.parseFloat(time_l.getText());
+        LevelState level_state = new LevelState(screen);
+        stateManager.attach(level_state);
+   
+
+
+        
         //TODO: clean up what you initialized in the initialize method,
         //e.g. remove all spatials from rootNode
         //this is called on the OpenGL thread after the AppState has been detached
@@ -199,33 +233,28 @@ public class LevelState extends AbstractAppState {
     private ActionListener actionListener = new ActionListener() {
 
         public void onAction(String binding, boolean value, float tpf) {
-            
-            if (binding.equals("Left")) {
-                if (value) left = true;
-                else left = false;
-            } else if (binding.equals("Right")) {
-                if (value) right = true;
-                else right = false;
-            } else if (binding.equals("Jump")){
-                player_character.jump();
+            if(stateManager.getState(LevelState.class).isEnabled()){
+                if (binding.equals("Left")) {
+                    if (value) left = true;
+                    else left = false;
+                } else if (binding.equals("Right")) {
+                    if (value) right = true;
+                    else right = false;
+                } else if (binding.equals("Jump") && value){
+                    player_character.jump();
+                } else if (binding.equals("Pause") && value){
+                    System.out.println("Pausing");
+                    stateManager.getState(LevelState.class).setEnabled(false);
+                }
             }
         }
 
     };
     
     private void generalSetup(){
-        cam.setParallelProjection(true);
         tlratio = cam.getFrustumLeft()/cam.getFrustumTop();
-        cam.setFrustumTop(5);
-        cam.setFrustumBottom(-5f);
-        cam.setFrustumLeft(cam.getFrustumTop() * tlratio);
-        cam.setFrustumRight(cam.getFrustumTop() * -(tlratio));
-        cam.update();
-        this.app.getFlyByCamera().setEnabled(true);
         this.app.getInputManager().setCursorVisible(false);
-        bas = new BulletAppState();
-        stateManager.attach(bas);
-        bas.setDebugEnabled(true);
+        
     }
 
     private void createMappings() {
@@ -235,8 +264,9 @@ public class LevelState extends AbstractAppState {
                                  new KeyTrigger(KeyInput.KEY_RIGHT)); // D and right arrow
         app.getInputManager().addMapping("Jump", new KeyTrigger(KeyInput.KEY_W), 
                                  new KeyTrigger(KeyInput.KEY_UP)); // D and right arrow
+        app.getInputManager().addMapping("Pause", new KeyTrigger(KeyInput.KEY_P));
         
-        app.getInputManager().addListener(actionListener, new String[]{"Left", "Right","Jump"});
+        app.getInputManager().addListener(actionListener, new String[]{"Left", "Right","Jump","Pause"});
     }
 
     private void setupCollidables() {
@@ -260,7 +290,7 @@ public class LevelState extends AbstractAppState {
                     h = h/32f * ((cam.getFrustumTop()-cam.getFrustumBottom())/rxf.getMap_height());
                    
                     
-                    RigidBodyControl floorMesh = new RigidBodyControl(new BoxCollisionShape(new Vector3f(w/2f,h/2f,2)),0.0f);
+                    RigidBodyControl floorMesh = new RigidBodyControl(new BoxCollisionShape(new Vector3f(w/2f,h/2f,1)),0.0f);
                     //GhostControl floorDetect = new GhostControl(new BoxCollisionShape(new Vector3f(w/32f,h/2f,2)));
 
                     Quad b = new Quad(.1f,.1f); // create cube shape
@@ -274,7 +304,7 @@ public class LevelState extends AbstractAppState {
                     //geom.addControl(floorDetect);
                    
                     //geom.scale(w,h,0);
-                    Node floorMeshNode = new Node();
+                    Node floorMeshNode = new Node("mesh for object");
                     floorMeshNode.attachChild(geom);
                     //geom.move(-w/32f/2f,-h/32f/2f,0);
                     
@@ -283,13 +313,13 @@ public class LevelState extends AbstractAppState {
                     bas.getPhysicsSpace().add(floorMesh);
                     //bas.getPhysicsSpace().add(floorDetect);
 
-                    floorMeshNode.getControl(RigidBodyControl.class).setPhysicsLocation(new Vector3f(x-cam.getFrustumRight()+w/2f,y-cam.getFrustumTop()-h/2f,0));
+                    floorMeshNode.getControl(RigidBodyControl.class).setPhysicsLocation(new Vector3f(x-cam.getFrustumRight()+w/2f,y-cam.getFrustumTop()-h/2f,-2));
                 }
              }
         }
         rootNode.attachChild(collisions);
         
-        GhostControl bottom_death = new GhostControl(new BoxCollisionShape(new Vector3f(cam.getWidth()/32f/2f,2f,2f)));
+        GhostControl bottom_death = new GhostControl(new BoxCollisionShape(new Vector3f(cam.getWidth()/32f/2f,2f,3f)));
         death_node = new Node("node for death");
         death_node.addControl(bottom_death);
             
@@ -297,7 +327,21 @@ public class LevelState extends AbstractAppState {
         bas.getPhysicsSpace().add(bottom_death);
         death_node.setLocalTranslation(0,0-cam.getHeight()/32f, 0);
         
+        start.x = ((start.x/32f)  * ((cam.getFrustumRight()-cam.getFrustumLeft())/rxf.getMap_width())) -cam.getFrustumRight();
+        start.y = ((rxf.getMap_height() -(start.y/32f)) * (cam.getFrustumTop()-cam.getFrustumBottom())/rxf.getMap_height()) -cam.getFrustumTop();
+        start.z = -2;
         
+        end.x = ((end.x/32f)  * ((cam.getFrustumRight()-cam.getFrustumLeft())/rxf.getMap_width())) -cam.getFrustumRight();
+        end.y = ((rxf.getMap_height() -(end.y/32f)) * (cam.getFrustumTop()-cam.getFrustumBottom())/rxf.getMap_height()) -cam.getFrustumTop();
+        end.z = -2;
+        
+        GhostControl ending = new GhostControl(new BoxCollisionShape(new Vector3f(.1f,.1f,2)));
+        ending_node = new Node("ending");
+        ending_node.setLocalTranslation(end);
+        ending_node.addControl(ending);
+        bas.getPhysicsSpace().add(ending_node);
+        
+        rootNode.attachChild(ending_node);
 
     }
 
@@ -324,7 +368,34 @@ public class LevelState extends AbstractAppState {
         rootNode.attachChild(playerNode);
         bas.getPhysicsSpace().add(playerNode);
         
-        playerNode.getControl(CharacterControl.class).setPhysicsLocation(new Vector3f(cam.getFrustumLeft()+1,-3,0));
+        playerNode.getControl(CharacterControl.class).setPhysicsLocation(start);
+        
                
+    }
+
+    private void createTitle() {
+        
+        String title = Main.titles[Main.level_count];
+        
+        words = title.split("\\s+");
+        
+        title_elements = new Element[words.length];
+        
+        
+        for(int i = 0; i < words.length; i++){
+             String k = "title_word_" + i;
+             title_elements[i] = new Element(screen, k,new Vector2f(0,0),new Vector2f(Math.abs(tlratio) * words[i].length() * 7 + 10,0),
+                new Vector4f(5,5,5,5),null);
+             title_elements[i].setText(words[i]);
+             int length = 0;
+             for(int j = 0; j < i; j++){
+                 length += 10 + Math.abs(tlratio) * (words[j].length() * 7);
+             }
+             title_elements[i].setPosition(20+length,50);
+             title_elements[i].setFontSize(Math.abs(tlratio)*20);
+             //title_elements[i];
+             screen.addElement(title_elements[i]);
+        }
+        
     }
 }

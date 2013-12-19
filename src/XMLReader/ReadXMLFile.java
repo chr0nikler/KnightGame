@@ -49,6 +49,9 @@ public class ReadXMLFile {
     private AssetManager assetManager;
     private BulletAppState bas;
     
+    Vector3f start;
+    Vector3f end;
+    
    public ReadXMLFile(String to_read,AssetManager as, BulletAppState bas){
        asset_manager = as;
        xml_to_read = to_read;
@@ -69,6 +72,8 @@ public class ReadXMLFile {
 	boolean blname = false;
 	boolean bnname = false;
 	boolean bsalary = false;
+        
+        
         
         int firstgid;
         String tileset_name;
@@ -96,6 +101,7 @@ public class ReadXMLFile {
  
                 if(qName.equalsIgnoreCase("tileset")){
                    firstgid = Integer.parseInt(attributes.getValue("firstgid"));
+
                    tileset_name = attributes.getValue("name");
                    tileset_tile_width = Integer.parseInt(attributes.getValue("tilewidth"));
                    tileset_tile_height = Integer.parseInt(attributes.getValue("tileheight"));
@@ -129,6 +135,16 @@ public class ReadXMLFile {
                 }
                 
                 if(qName.equalsIgnoreCase("object")){
+                    if(attributes.getValue("name")!=null){
+                        if(attributes.getValue("name").equalsIgnoreCase("Start")){
+                            start = new Vector3f(Integer.parseInt(attributes.getValue("x")),Integer.parseInt(attributes.getValue("y")),0);
+                        } else if(attributes.getValue("name").equalsIgnoreCase("End")){
+                            end = new Vector3f(Integer.parseInt(attributes.getValue("x")),Integer.parseInt(attributes.getValue("y")),0);
+                        }
+                        
+                        return;
+                    }
+                    
                     object_x = Integer.parseInt(attributes.getValue("x"));
                     object_y = Integer.parseInt(attributes.getValue("y"));
                     object_width = Integer.parseInt(attributes.getValue("width"));
@@ -150,7 +166,7 @@ public class ReadXMLFile {
  
      };
       // File xml = (File)asset_manager.loadAsset("Textures/testMap.tmx");
-       saxParser.parse("assets/Textures/testMap.tmx", handler);
+       saxParser.parse(xml_to_read, handler);
  
      } catch (Exception e) {
        e.printStackTrace();
@@ -164,7 +180,6 @@ public class ReadXMLFile {
        Node level = new Node("level");
        
        int[][] tile_coords = new int[getMap_height()][getMap_width()];
-       System.out.println(layers.size());
        for(int i  =0; i< layers.size(); i++){
         for(int y = 0; y < getMap_height(); y++){
             for(int x = 0; x < getMap_width(); x++){
@@ -239,16 +254,15 @@ public class ReadXMLFile {
                 geom.setMaterial(mat);
                 //geom.setQueueBucket(Bucket.Transparent); 
                 Node quad_tile = new Node("Quad");
-                System.out.println(tile_gid + " gid " + current_counter);
                 if(tile_gid == 1 && current_counter == 0){
                     quad_tile.setUserData("name","invisible");
                 } else {
                     quad_tile.setUserData("name","normal");
                 }
                 quad_tile.attachChild(geom);
+                
+                quad_tile.setLocalTranslation(dest_x/32f,((getMap_height()*getTile_height())-dest_y)/32f,0f);
                 level.attachChild(quad_tile);
-                quad_tile.setLocalTranslation(dest_x/32f,((getMap_height()*getTile_height())-dest_y)/32f,0);
-                //geom.move(-7f,-7f,0);
                 Object[] group = new Object[3];
                 group[0] = geom;
                 group[1] = dest_x;
@@ -267,14 +281,15 @@ public class ReadXMLFile {
         level.setLocalScale(width/getMap_width(),height/getMap_height(),0);
         for(int  i = 0; i < level.getChildren().size(); i++){
             ((Node)level.getChild(i)).move(-getMap_width()/2f,-getMap_height()/2f - 1,0);
-            System.out.println(((Node)level.getChild(i)).getUserData("name"));
             if(((Node)level.getChild(i)).getUserData("name").equals("invisible")){
-                GhostControl floorDetect = new GhostControl(new BoxCollisionShape(new Vector3f((tile_width*level.getLocalScale().x)/32f/2f/2f,(tile_height*level.getLocalScale().y/32f/2f/3f),2)));
+                GhostControl floorDetect = new GhostControl(new BoxCollisionShape(new Vector3f((tile_width*level.getLocalScale().x)/32f/4f/2f,(tile_height*level.getLocalScale().y/32f/2f/3f),3f)));
                 Node adjustGhost = new Node();
+                
                 ((Node)level.getChild(i)).attachChild(adjustGhost);
-                adjustGhost.move(tile_width/32f/2f,(tile_height/32f)+(tile_height/32f/3f),0);
+                adjustGhost.move(tile_width/32f/2f,(tile_height/32f)+(tile_height/32f/2f),0);
+               // floorDetect.setPhysicsLocation(new Vector3f(0,0,-5));
                 adjustGhost.addControl(floorDetect);
-                bas.getPhysicsSpace().add(floorDetect);
+                bas.getPhysicsSpace().add(adjustGhost);
             }
         }
        
@@ -285,9 +300,8 @@ public class ReadXMLFile {
        Vector tilesetImages = new Vector<BufferedImage>();
        for(int i=0; i < tilesets.size();i++){
             try{
-                System.out.println(((TileSet)tilesets.get(i)).getSource());
-             tilesetImages.add(ImageIO.read(asset_manager.locateAsset(
-                     new AssetKey(((TileSet)tilesets.get(i)).getSource())).openStream()));
+                tilesetImages.add(ImageIO.read(asset_manager.locateAsset(
+                new AssetKey(((TileSet)tilesets.get(i)).getSource())).openStream()));
             }
             catch (IOException ex) {
              
@@ -336,6 +350,14 @@ public class ReadXMLFile {
      */
     public int getTile_width() {
         return tile_width;
+    }
+    
+    public Vector3f getStart(){
+        return start;
+    }
+    
+    public Vector3f getEnd(){
+        return end;
     }
 
     /**
