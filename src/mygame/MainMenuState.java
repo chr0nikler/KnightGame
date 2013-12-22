@@ -8,6 +8,7 @@ import com.jme3.app.Application;
 import com.jme3.app.SimpleApplication;
 import com.jme3.app.state.AbstractAppState;
 import com.jme3.app.state.AppStateManager;
+import com.jme3.font.BitmapFont;
 import com.jme3.input.event.MouseButtonEvent;
 import com.jme3.math.ColorRGBA;
 import com.jme3.math.Vector2f;
@@ -141,6 +142,15 @@ public class MainMenuState extends AbstractAppState {
         screen.addElement(time_info_l);
 
         time_info_l.showWithEffect();
+        
+        Label pause_l = new Label(screen, "pause_button", new Vector2f(0,0),new Vector2f(200,0));
+        pause_l.setFontSize(Math.abs(Main.tlratio * 15));
+        pause_l.setTextAlign(BitmapFont.Align.Right);
+        pause_l.setPosition(screen.getWidth()-pause_l.getWidth(),10);
+        pause_l.setText("Press 'P' to pause");
+        
+        screen.addElement(pause_l);
+        
  
         LevelState level_state  = new LevelState(screen);
         stateManager.attach(level_state);

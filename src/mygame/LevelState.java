@@ -377,7 +377,15 @@ public class LevelState extends AbstractAppState {
         
         String title = Main.titles[Main.level_count];
         
-        words = title.split("\\s+");
+        title_elements = new Element[1];
+        title_elements[0] = new Element(screen, "title_words",new Vector2f(0,0),new Vector2f(Math.abs(tlratio) * title.length()*10 + 10,0),
+                new Vector4f(5,5,5,5),null);
+        title_elements[0].setText(title);
+        title_elements[0].setPosition(20,50);
+        title_elements[0].setFontSize(Math.abs(tlratio)*20);
+             //title_elements[i];
+        screen.addElement(title_elements[0]);
+        /*words = title.split("\\s+");
         
         title_elements = new Element[words.length];
         
@@ -395,7 +403,7 @@ public class LevelState extends AbstractAppState {
              title_elements[i].setFontSize(Math.abs(tlratio)*20);
              //title_elements[i];
              screen.addElement(title_elements[i]);
-        }
+        }*/
         
     }
 }
