@@ -84,8 +84,8 @@ public class PauseState extends AbstractAppState {
         window.addChild(left);
         left.setPosition(window.getWidth() * .05f, window.getHeight() * .4f);
          
-        Element left_pic = new Element(screen, "left_pic", new Vector2f(0,0), new Vector2f(288,32)
-                , new Vector4f(5,5,5,5), "Textures/Sprite.png");
+        Element left_pic = new Element(screen, "left_pic", new Vector2f(0,0), new Vector2f(360,720)
+                , new Vector4f(5,5,5,5), "Textures/Knight.png");
         window.addChild(left_pic);
         left_pic.setPosition(window.getWidth() * .6f,  window.getHeight() * .4f);
         

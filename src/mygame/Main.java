@@ -51,7 +51,7 @@ public class Main extends SimpleApplication {
         getInputManager().setCursorVisible(false);
         bas = new BulletAppState();
         stateManager.attach(bas);
-        bas.setDebugEnabled(false);    
+        bas.setDebugEnabled(true);    
         
         screen = new Screen(this);
         guiNode.addControl(screen);

@@ -25,16 +25,25 @@ import com.jme3.input.KeyInput;
 import com.jme3.input.controls.ActionListener;
 import com.jme3.input.controls.KeyTrigger;
 import com.jme3.material.Material;
+import com.jme3.material.RenderState;
 import com.jme3.math.ColorRGBA;
+import com.jme3.math.FastMath;
+import com.jme3.math.Quaternion;
 import com.jme3.math.Vector2f;
 import com.jme3.math.Vector3f;
 import com.jme3.math.Vector4f;
 import com.jme3.renderer.Camera;
+import com.jme3.renderer.ViewPort;
+import com.jme3.renderer.queue.RenderQueue.Bucket;
 import com.jme3.scene.Geometry;
+import com.jme3.scene.Mesh;
 import com.jme3.scene.Node;
+import com.jme3.scene.Spatial.CullHint;
 import com.jme3.scene.shape.Quad;
 import com.jme3.system.lwjgl.LwjglTimer;
+import com.jme3.texture.Texture;
 import com.jme3.texture.Texture2D;
+import com.jme3.ui.Picture;
 import java.awt.image.BufferedImage;
 import java.util.Vector;
 import static mygame.Main.engine;
@@ -47,10 +56,11 @@ import tonegod.gui.core.Screen;
  * @author JSC
  */
 public class LevelState extends AbstractAppState {
-    
+    SpriteLibrary library;
     Label time_l;
     BulletAppState bas;
     Sprite playerSprite;
+    Sprite playerSprite2;
     int gravity = -80;
     Vector3f playerVelocity = new Vector3f(0,gravity,0);
     Node playerNode;
@@ -66,7 +76,7 @@ public class LevelState extends AbstractAppState {
     LwjglTimer game_timer;
     float tlratio;
     private Node death_node;
-    
+    private boolean flipped = false;
     Vector3f start;
     Vector3f end;
     Node ending_node;
@@ -90,6 +100,8 @@ public class LevelState extends AbstractAppState {
         this.screen = screen;
         this.time_l = (Label)screen.getElementById("time");
         this.time_info_l = screen.getElementById("time_info");
+        
+       
     }
     
     @Override
@@ -105,11 +117,44 @@ public class LevelState extends AbstractAppState {
         this.bas = this.stateManager.getState(BulletAppState.class);
         
         
-       
+        
+        
+        library = new SpriteLibrary("Library 1", false);
+        SpriteLibrary.setL_guiNode(rootNode);
+        engine.addLibrary(library);
+        
+        float w = cam.getFrustumLeft()- cam.getFrustumRight(); 
+        float h = cam.getFrustumTop()- cam.getFrustumBottom(); 
+
+        Quad bg = new Quad(1,1);
+        Geometry geo = new Geometry("BG",bg);
+        
+        Texture t = assetManager.loadTexture("Textures/background-transport.png");
+        Material s_material = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
+        s_material.setTexture("ColorMap", t);
+        geo.setQueueBucket(Bucket.Sky);
+        geo.setCullHint(CullHint.Never);
+        geo.setMaterial(s_material);
+        s_material.getAdditionalRenderState().setBlendMode(RenderState.BlendMode.Alpha);
+
+        
+        rootNode.attachChild(geo);
+        
+        System.out.println(cam.getFrustumTop()-cam.getFrustumBottom());
+        geo.move(cam.getFrustumLeft(),cam.getFrustumBottom(),0);
+        
+        geo.setLocalScale(cam.getFrustumRight()- cam.getFrustumLeft(),cam.getFrustumTop()- cam.getFrustumBottom(),1);
+        
+        
+        
+
+        //app.getViewPort().setClearFlags(false, true, true);
         
         generalSetup();
         
         createTitle();
+        
+        
         
         //createMappings();
         
@@ -139,21 +184,46 @@ public class LevelState extends AbstractAppState {
     
     @Override
     public void update(float tpf) {
+        Vector3f camDir = cam.getDirection().clone().multLocal(0.25f);
+        Vector3f camLeft = cam.getLeft().clone().multLocal(0.25f);
+        camDir.y = 0;
+        camLeft.y = 0;
+        
         if(stateManager.getState(LevelState.class).isEnabled()){
             try{
                time_l.setText((String)(Float.toString(game_timer.getTimeInSeconds() + Main.current_time)).subSequence(0, 5));
-           } catch(Exception e) {
+            } catch(Exception e) {
                time_l.setText((String)(Float.toString(game_timer.getTimeInSeconds() +  Main.current_time)).subSequence(0, 3));
-           }
-        
-            //game_timer.update();
+            }
+            
+            Main.engine.update(tpf);
 
             walkDirection.set(0, 0, 0);
-
-            if (left)  walkDirection = new Vector3f(-.1f,0f,0f);
-            if (right) walkDirection = new Vector3f(.1f,0f,0f);
-
-            player_character.setWalkDirection(walkDirection);
+            if (left)  {
+                walkDirection.addLocal(camLeft);
+                if(!flipped){
+                    playerSprite.getNode().setLocalTranslation(new Vector3f(0,0,0));
+                    playerSprite.setPaused(true);
+                    playerSprite.scaleTexture(new Vector2f(1f,-1f));
+                    playerSprite.setPaused(false);
+                    flipped = true;
+                    playerSprite.rotate(0, 0, 180);
+                    playerSprite.move(.5f,.5f);
+                }
+            } else if (right){
+                walkDirection.addLocal(camLeft.negate());
+                if(flipped){
+                    playerSprite.getNode().setLocalTranslation(new Vector3f(0,0,0));
+                    playerSprite.setPaused(true);
+                    playerSprite.scaleTexture(new Vector2f(1f,-1f));
+                    playerSprite.setPaused(false);
+                    flipped = false;
+                    playerSprite.rotate(0,0,-180);
+                    playerSprite.move(-.5f,-.5f);
+                }
+            }
+           
+            player_character.setWalkDirection(walkDirection.mult(.3f));
 
             for(int i = 0; i < l.getChildren().size(); i++){
                 if(((Node)l.getChild(i)).getChildren().size()==2){
@@ -179,6 +249,7 @@ public class LevelState extends AbstractAppState {
 
             if(!ending_node.getControl(GhostControl.class).getOverlappingObjects().isEmpty()){
                 Main.level_count +=1;
+                app.getInputManager().removeListener(actionListener);
                 stateManager.detach(stateManager.getState(LevelState.class));
             }
         }
@@ -211,7 +282,7 @@ public class LevelState extends AbstractAppState {
         stateManager.detach(bas);
         bas = new BulletAppState();
         stateManager.attach(bas);
-        bas.setDebugEnabled(false);
+        bas.setDebugEnabled(true);
         rootNode.detachAllChildren();
         
         for(int i = 0; i < title_elements.length; i++){
@@ -237,6 +308,7 @@ public class LevelState extends AbstractAppState {
                 if (binding.equals("Left")) {
                     if (value) left = true;
                     else left = false;
+                    
                 } else if (binding.equals("Right")) {
                     if (value) right = true;
                     else right = false;
@@ -288,10 +360,8 @@ public class LevelState extends AbstractAppState {
                     y = (rxf.getMap_height() -(y/32f)) * (cam.getFrustumTop()-cam.getFrustumBottom())/rxf.getMap_height();//- cam.getFrustumTop();//((1- (y/(32f*rxf.getMap_height()))))-(h/(32f*rxf.getMap_height()))-rxf.getMap_height()/2;//+cam.getFrustumTop())-h;
                     w = w/32f * ((cam.getFrustumRight()-cam.getFrustumLeft())/rxf.getMap_width());///(cam.getFrustumRight()*2);
                     h = h/32f * ((cam.getFrustumTop()-cam.getFrustumBottom())/rxf.getMap_height());
-                   
                     
                     RigidBodyControl floorMesh = new RigidBodyControl(new BoxCollisionShape(new Vector3f(w/2f,h/2f,1)),0.0f);
-                    //GhostControl floorDetect = new GhostControl(new BoxCollisionShape(new Vector3f(w/32f,h/2f,2)));
 
                     Quad b = new Quad(.1f,.1f); // create cube shape
                     
@@ -301,17 +371,13 @@ public class LevelState extends AbstractAppState {
                     mat.setColor("Color",new ColorRGBA(0,0,0,0f));   // set color of material to blue
                     geom.setMaterial(mat);
                     geom.addControl(floorMesh);
-                    //geom.addControl(floorDetect);
                    
-                    //geom.scale(w,h,0);
                     Node floorMeshNode = new Node("mesh for object");
                     floorMeshNode.attachChild(geom);
-                    //geom.move(-w/32f/2f,-h/32f/2f,0);
                     
                     floorMeshNode.addControl(floorMesh);
                     collisions.attachChild(floorMeshNode);
                     bas.getPhysicsSpace().add(floorMesh);
-                    //bas.getPhysicsSpace().add(floorDetect);
 
                     floorMeshNode.getControl(RigidBodyControl.class).setPhysicsLocation(new Vector3f(x-cam.getFrustumRight()+w/2f,y-cam.getFrustumTop()-h/2f,-2));
                 }
@@ -321,6 +387,8 @@ public class LevelState extends AbstractAppState {
         
         GhostControl bottom_death = new GhostControl(new BoxCollisionShape(new Vector3f(cam.getWidth()/32f/2f,2f,3f)));
         death_node = new Node("node for death");
+        
+        
         death_node.addControl(bottom_death);
             
         rootNode.attachChild(death_node);
@@ -339,6 +407,12 @@ public class LevelState extends AbstractAppState {
         ending_node = new Node("ending");
         ending_node.setLocalTranslation(end);
         ending_node.addControl(ending);
+        
+        Sprite warp = new Sprite("Textures/WarpHoleRow.png","WarpHole", assetManager, true, true, 25, 2, 0.05f, "Loop", "Start");
+        warp.setPaused(false);
+        library.addSprite(warp);
+        ending_node.attachChild(warp.getNode());
+        warp.move(-.5f, -.5f);
         bas.getPhysicsSpace().add(ending_node);
         
         rootNode.attachChild(ending_node);
@@ -346,23 +420,20 @@ public class LevelState extends AbstractAppState {
     }
 
     private void setupPlayer() {
-        playerSprite = new Sprite("Textures/Sprite.png", "Player", assetManager, true, true, 9, 1, 0.08f, "NoLoop", "Start");
-        playerSprite.setPaused(true);
-        SpriteLibrary library = new SpriteLibrary("Library 1", false);
-        SpriteLibrary.setL_guiNode(rootNode);
+        playerSprite = new Sprite("Textures/KnightForward.png", "Player", assetManager, true, true, 24, 1, 0.05f, "Loop", "Start");
+
+        playerSprite.setPaused(false);
         library.addSprite(playerSprite);
         engine.addLibrary(library);
         
         playerNode = new Node();
         playerNode.attachChild(playerSprite.getNode());
         playerSprite.move(-.5f,-.5f);
-        
-        
+
         CapsuleCollisionShape capsuleShape = new CapsuleCollisionShape(.3f,.15f);
         
         player_character = new CharacterControl(capsuleShape, .2f);
         player_character.setFallSpeed(20f);
-        //player_character.setGravity(30f);
         
         playerNode.addControl(player_character);
         rootNode.attachChild(playerNode);

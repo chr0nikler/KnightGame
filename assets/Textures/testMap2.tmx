@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.0" orientation="orthogonal" width="25" height="20" tilewidth="32" tileheight="32">
+<map version="1.0" orientation="orthogonal" width="26" height="20" tilewidth="32" tileheight="32">
  <tileset firstgid="1" name="transparent" tilewidth="32" tileheight="32">
   <image source="Tiles/transparent.png" trans="ff00ff" width="32" height="32"/>
  </tileset>
  <tileset firstgid="2" name="realtiles" tilewidth="32" tileheight="32">
   <image source="Tiles/realtiles.png" trans="ff00ff" width="192" height="544"/>
  </tileset>
- <layer name="Floor" width="25" height="20">
+ <layer name="Floor" width="26" height="20">
   <data>
    <tile gid="0"/>
    <tile gid="0"/>
@@ -157,7 +157,6 @@
    <tile gid="0"/>
    <tile gid="0"/>
    <tile gid="0"/>
-   <tile gid="84"/>
    <tile gid="0"/>
    <tile gid="0"/>
    <tile gid="0"/>
@@ -182,7 +181,6 @@
    <tile gid="0"/>
    <tile gid="0"/>
    <tile gid="0"/>
-   <tile gid="83"/>
    <tile gid="0"/>
    <tile gid="0"/>
    <tile gid="0"/>
@@ -413,8 +411,6 @@
    <tile gid="0"/>
    <tile gid="0"/>
    <tile gid="0"/>
-   <tile gid="78"/>
-   <tile gid="78"/>
    <tile gid="0"/>
    <tile gid="0"/>
    <tile gid="0"/>
@@ -433,12 +429,6 @@
    <tile gid="0"/>
    <tile gid="0"/>
    <tile gid="0"/>
-   <tile gid="15"/>
-   <tile gid="15"/>
-   <tile gid="15"/>
-   <tile gid="15"/>
-   <tile gid="15"/>
-   <tile gid="15"/>
    <tile gid="0"/>
    <tile gid="0"/>
    <tile gid="0"/>
@@ -508,21 +498,43 @@
    <tile gid="0"/>
    <tile gid="0"/>
    <tile gid="0"/>
+   <tile gid="0"/>
+   <tile gid="0"/>
+   <tile gid="0"/>
+   <tile gid="0"/>
+   <tile gid="85"/>
+   <tile gid="85"/>
+   <tile gid="85"/>
+   <tile gid="85"/>
+   <tile gid="1"/>
+   <tile gid="1"/>
+   <tile gid="1"/>
+   <tile gid="1"/>
+   <tile gid="1"/>
+   <tile gid="1"/>
+   <tile gid="1"/>
+   <tile gid="1"/>
+   <tile gid="0"/>
+   <tile gid="0"/>
+   <tile gid="0"/>
+   <tile gid="0"/>
+   <tile gid="1"/>
+   <tile gid="1"/>
+   <tile gid="1"/>
+   <tile gid="1"/>
+   <tile gid="1"/>
+   <tile gid="1"/>
+   <tile gid="1"/>
+   <tile gid="85"/>
+   <tile gid="85"/>
+   <tile gid="85"/>
   </data>
  </layer>
- <objectgroup name="Collision" width="25" height="20">
-  <object x="672" y="192" width="96" height="32"/>
-  <object x="320" y="448" width="64" height="32"/>
-  <object x="160" y="384" width="64" height="32"/>
-  <object x="352" y="320" width="64" height="32"/>
-  <object x="448" y="256" width="96" height="32"/>
-  <object x="-2" y="545" width="193" height="29"/>
-  <object x="159" y="512" width="63" height="31"/>
-  <object x="-53" y="60" width="51" height="511"/>
-  <object x="804" y="47" width="116" height="522"/>
-  <object x="768" y="192" width="32" height="32"/>
+ <objectgroup name="Collision" width="26" height="20">
+  <object x="0" y="608" width="384" height="32"/>
+  <object x="512" y="608" width="320" height="32"/>
  </objectgroup>
- <layer name="Invisible" width="25" height="20">
+ <layer name="Invisible" width="26" height="20">
   <data>
    <tile gid="0"/>
    <tile gid="0"/>
@@ -695,9 +707,6 @@
    <tile gid="0"/>
    <tile gid="0"/>
    <tile gid="0"/>
-   <tile gid="1"/>
-   <tile gid="1"/>
-   <tile gid="1"/>
    <tile gid="0"/>
    <tile gid="0"/>
    <tile gid="0"/>
@@ -738,9 +747,6 @@
    <tile gid="0"/>
    <tile gid="0"/>
    <tile gid="0"/>
-   <tile gid="1"/>
-   <tile gid="1"/>
-   <tile gid="1"/>
    <tile gid="0"/>
    <tile gid="0"/>
    <tile gid="0"/>
@@ -785,8 +791,6 @@
    <tile gid="0"/>
    <tile gid="0"/>
    <tile gid="0"/>
-   <tile gid="1"/>
-   <tile gid="1"/>
    <tile gid="0"/>
    <tile gid="0"/>
    <tile gid="0"/>
@@ -829,8 +833,6 @@
    <tile gid="0"/>
    <tile gid="0"/>
    <tile gid="0"/>
-   <tile gid="1"/>
-   <tile gid="1"/>
    <tile gid="0"/>
    <tile gid="0"/>
    <tile gid="0"/>
@@ -884,8 +886,38 @@
    <tile gid="0"/>
    <tile gid="0"/>
    <tile gid="0"/>
-   <tile gid="1"/>
-   <tile gid="1"/>
+   <tile gid="0"/>
+   <tile gid="0"/>
+   <tile gid="0"/>
+   <tile gid="0"/>
+   <tile gid="0"/>
+   <tile gid="0"/>
+   <tile gid="0"/>
+   <tile gid="0"/>
+   <tile gid="0"/>
+   <tile gid="0"/>
+   <tile gid="0"/>
+   <tile gid="0"/>
+   <tile gid="0"/>
+   <tile gid="0"/>
+   <tile gid="0"/>
+   <tile gid="0"/>
+   <tile gid="0"/>
+   <tile gid="0"/>
+   <tile gid="0"/>
+   <tile gid="0"/>
+   <tile gid="0"/>
+   <tile gid="0"/>
+   <tile gid="0"/>
+   <tile gid="0"/>
+   <tile gid="0"/>
+   <tile gid="0"/>
+   <tile gid="0"/>
+   <tile gid="0"/>
+   <tile gid="0"/>
+   <tile gid="0"/>
+   <tile gid="0"/>
+   <tile gid="0"/>
    <tile gid="0"/>
    <tile gid="0"/>
    <tile gid="0"/>
@@ -1026,8 +1058,8 @@
    <tile gid="0"/>
   </data>
  </layer>
- <objectgroup name="Nodes" width="25" height="20">
-  <object name="Start" x="45" y="474" width="7" height="7"/>
-  <object name="End" x="776" y="145" width="8" height="8"/>
+ <objectgroup name="Nodes" width="26" height="20">
+  <object name="Start" x="27" y="552" width="13" height="10"/>
+  <object name="End" x="795" y="562" width="13" height="13"/>
  </objectgroup>
 </map>

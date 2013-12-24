@@ -4,7 +4,10 @@ import com.jme3.asset.AssetManager;
 import com.jme3.material.Material;
 import com.jme3.material.RenderState;
 import com.jme3.math.FastMath;
+import com.jme3.math.Quaternion;
+import com.jme3.math.Vector2f;
 import com.jme3.math.Vector3f;
+import com.jme3.renderer.queue.RenderQueue;
 import com.jme3.scene.Geometry;
 import com.jme3.scene.Node;
 import com.jme3.scene.VertexBuffer;
@@ -53,11 +56,14 @@ public class Sprite{
         this.s_onEnd = onEnd;
         this.s_onResume = this.s_tempOnResume = onResume;
         Texture s_spritesheet = assetManager.loadTexture(imageLocation);
-        Quad s_quad = new Quad((int)(s_spritesheet.getImage().getWidth()/frames/32), (int)(s_spritesheet.getImage().getHeight()/rows/32));
+       
+        s_spritesheet.setWrap(Texture.WrapMode.Repeat);
+        Quad s_quad = new Quad((int)(s_spritesheet.getImage().getWidth()/frames/243), (int)(s_spritesheet.getImage().getHeight()/rows/248));
         s_geometry = new Geometry(name, s_quad);
         Material s_material = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
         s_material.setTexture("ColorMap", s_spritesheet);
         s_geometry.setMaterial(s_material);
+        s_geometry.setQueueBucket(RenderQueue.Bucket.Transparent);
         if (transparent){
             s_material.getAdditionalRenderState().setBlendMode(RenderState.BlendMode.Alpha);
         }
@@ -124,10 +130,10 @@ public class Sprite{
     }
     
     public void changeDirection(){
-        if (s_direction == 2){
+        if (s_direction == -1){
             s_direction = 1;
         } else {
-            s_direction = 2;
+            s_direction = -1;
         }
     }
     
@@ -255,4 +261,11 @@ public class Sprite{
         s_node.rotate(FastMath.DEG_TO_RAD*x, FastMath.DEG_TO_RAD*y, FastMath.DEG_TO_RAD*z);
     }
     
+    public Quaternion getRotation(){
+        return s_node.getLocalRotation();
+    }
+    public Geometry scaleTexture(Vector2f scale){
+        s_geometry.getMesh().scaleTextureCoordinates(scale);
+        return s_geometry;
+    }
 }

@@ -252,7 +252,7 @@ public class ReadXMLFile {
                 mat.setTexture("ColorMap",t);  // set color of material to blue
                 mat.getAdditionalRenderState().setBlendMode(BlendMode.Alpha);
                 geom.setMaterial(mat);
-                //geom.setQueueBucket(Bucket.Transparent); 
+                geom.setQueueBucket(Bucket.Transparent); 
                 Node quad_tile = new Node("Quad");
                 if(tile_gid == 1 && current_counter == 0){
                     quad_tile.setUserData("name","invisible");
