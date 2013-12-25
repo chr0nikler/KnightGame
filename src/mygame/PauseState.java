@@ -73,10 +73,10 @@ public class PauseState extends AbstractAppState {
         window.addChild(up);
         up.setPosition(window.getWidth() * .05f, window.getHeight() * .6f);
         
-        Element up_pic = new Element(screen, "up_pic", new Vector2f(0,0), new Vector2f(288,32)
+        /*Element up_pic = new Element(screen, "up_pic", new Vector2f(0,0), new Vector2f(288,32)
                 , new Vector4f(5,5,5,5), "Textures/Sprite.png");
         window.addChild(up_pic);
-        up_pic.setPosition(window.getWidth() * .6f,  window.getHeight() * .6f);
+        up_pic.setPosition(window.getWidth() * .6f,  window.getHeight() * .6f);*/
         
         Label left = new Label(screen, "left", new Vector2f(0,0), new Vector2f(500,0));
         left.setText("Hold the 'A' key or the LEFT arrow to go LEFT!");
@@ -84,10 +84,10 @@ public class PauseState extends AbstractAppState {
         window.addChild(left);
         left.setPosition(window.getWidth() * .05f, window.getHeight() * .4f);
          
-        Element left_pic = new Element(screen, "left_pic", new Vector2f(0,0), new Vector2f(360,720)
+        /*Element left_pic = new Element(screen, "left_pic", new Vector2f(0,0), new Vector2f(360,720)
                 , new Vector4f(5,5,5,5), "Textures/Knight.png");
         window.addChild(left_pic);
-        left_pic.setPosition(window.getWidth() * .6f,  window.getHeight() * .4f);
+        left_pic.setPosition(window.getWidth() * .6f,  window.getHeight() * .4f);*/
         
         
         Label right = new Label(screen, "right", new Vector2f(0,0), new Vector2f(500,0));
@@ -96,10 +96,10 @@ public class PauseState extends AbstractAppState {
         right.setFontSize(fontSize);
         right.setPosition(window.getWidth() * .05f, window.getHeight() * .2f);
         
-        Element right_pic = new Element(screen, "right_pic", new Vector2f(0,0), new Vector2f(144,16)
+        /*Element right_pic = new Element(screen, "right_pic", new Vector2f(0,0), new Vector2f(144,16)
                 , new Vector4f(5,5,5,5), "Textures/Sprite.png");
         window.addChild(right_pic);
-        right_pic.setPosition(window.getWidth() * .6f,  window.getHeight() * .2f);
+        right_pic.setPosition(window.getWidth() * .6f,  window.getHeight() * .2f);*/
                 
         
         

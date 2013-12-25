@@ -51,13 +51,14 @@ public class Main extends SimpleApplication {
         getInputManager().setCursorVisible(false);
         bas = new BulletAppState();
         stateManager.attach(bas);
-        bas.setDebugEnabled(true);    
+        bas.setDebugEnabled(false);    
         
         screen = new Screen(this);
         guiNode.addControl(screen);
         
         MainMenuState main_menu_state = new MainMenuState(screen);
-        
+        //LevelState main_menu_state = new LevelState(screen);
+
         stateManager.attach(main_menu_state);
         
 

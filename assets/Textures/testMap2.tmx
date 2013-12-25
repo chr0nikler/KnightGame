@@ -3,8 +3,8 @@
  <tileset firstgid="1" name="transparent" tilewidth="32" tileheight="32">
   <image source="Tiles/transparent.png" trans="ff00ff" width="32" height="32"/>
  </tileset>
- <tileset firstgid="2" name="realtiles" tilewidth="32" tileheight="32">
-  <image source="Tiles/realtiles.png" trans="ff00ff" width="192" height="544"/>
+ <tileset firstgid="2" name="ReiatsuTileStaticNew" tilewidth="32" tileheight="32">
+  <image source="Tiles/ReiatsuTileStaticNew.png" trans="ff00ff" width="32" height="32"/>
  </tileset>
  <layer name="Floor" width="26" height="20">
   <data>
@@ -502,11 +502,11 @@
    <tile gid="0"/>
    <tile gid="0"/>
    <tile gid="0"/>
-   <tile gid="85"/>
-   <tile gid="85"/>
-   <tile gid="85"/>
-   <tile gid="85"/>
-   <tile gid="1"/>
+   <tile gid="2"/>
+   <tile gid="2"/>
+   <tile gid="2"/>
+   <tile gid="2"/>
+   <tile gid="2"/>
    <tile gid="1"/>
    <tile gid="1"/>
    <tile gid="1"/>
@@ -522,17 +522,19 @@
    <tile gid="1"/>
    <tile gid="1"/>
    <tile gid="1"/>
-   <tile gid="1"/>
-   <tile gid="1"/>
-   <tile gid="1"/>
-   <tile gid="85"/>
-   <tile gid="85"/>
-   <tile gid="85"/>
+   <tile gid="2"/>
+   <tile gid="2"/>
+   <tile gid="2"/>
+   <tile gid="2"/>
+   <tile gid="2"/>
+   <tile gid="2"/>
   </data>
  </layer>
  <objectgroup name="Collision" width="26" height="20">
   <object x="0" y="608" width="384" height="32"/>
   <object x="512" y="608" width="320" height="32"/>
+  <object x="-56" y="100" width="55" height="523"/>
+  <object x="832" y="96" width="89" height="525"/>
  </objectgroup>
  <layer name="Invisible" width="26" height="20">
   <data>
@@ -1035,21 +1037,21 @@
    <tile gid="0"/>
    <tile gid="0"/>
    <tile gid="0"/>
+   <tile gid="1"/>
+   <tile gid="1"/>
+   <tile gid="1"/>
+   <tile gid="1"/>
+   <tile gid="1"/>
+   <tile gid="1"/>
+   <tile gid="1"/>
    <tile gid="0"/>
    <tile gid="0"/>
    <tile gid="0"/>
    <tile gid="0"/>
-   <tile gid="0"/>
-   <tile gid="0"/>
-   <tile gid="0"/>
-   <tile gid="0"/>
-   <tile gid="0"/>
-   <tile gid="0"/>
-   <tile gid="0"/>
-   <tile gid="0"/>
-   <tile gid="0"/>
-   <tile gid="0"/>
-   <tile gid="0"/>
+   <tile gid="1"/>
+   <tile gid="1"/>
+   <tile gid="1"/>
+   <tile gid="1"/>
    <tile gid="0"/>
    <tile gid="0"/>
    <tile gid="0"/>

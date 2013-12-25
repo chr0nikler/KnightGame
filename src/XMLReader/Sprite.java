@@ -58,12 +58,13 @@ public class Sprite{
         Texture s_spritesheet = assetManager.loadTexture(imageLocation);
        
         s_spritesheet.setWrap(Texture.WrapMode.Repeat);
-        Quad s_quad = new Quad((int)(s_spritesheet.getImage().getWidth()/frames/243), (int)(s_spritesheet.getImage().getHeight()/rows/248));
+        Quad s_quad = new Quad((int)(1), (int)(1));
         s_geometry = new Geometry(name, s_quad);
         Material s_material = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
         s_material.setTexture("ColorMap", s_spritesheet);
         s_geometry.setMaterial(s_material);
-        s_geometry.setQueueBucket(RenderQueue.Bucket.Transparent);
+        s_geometry.setQueueBucket(RenderQueue.Bucket.Translucent);
+        //s_geometry.setQueueBucket(RenderQueue.Bucket.Sky);
         if (transparent){
             s_material.getAdditionalRenderState().setBlendMode(RenderState.BlendMode.Alpha);
         }

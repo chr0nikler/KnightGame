@@ -34,6 +34,10 @@ public class MainMenuState extends AbstractAppState {
     ButtonAdapter start_button;
     ButtonAdapter credits_button;
     Element title;
+    Label credits_titles;
+    Label credits_names;
+    Label credits_dots;
+    ButtonAdapter back_button;
                
     MainMenuState(Screen screen) {
         this.screen = screen;
@@ -67,7 +71,7 @@ public class MainMenuState extends AbstractAppState {
         title.showWithEffect();
         
         
-        start_button = new ButtonAdapter(screen,"start", new Vector2f(0, 0)) {
+        start_button = new ButtonAdapter(screen,"start", new Vector2f(0, 0), new Vector2f(screen.getWidth()/8f,screen.getHeight()/10f)) {
             @Override
             public void onButtonMouseLeftUp(MouseButtonEvent evt, boolean toggled) {
                 stateManager.detach(stateManager.getState(MainMenuState.class));
@@ -78,22 +82,35 @@ public class MainMenuState extends AbstractAppState {
         };
         start_button.setPosition(screen.getWidth()/2f-start_button.getWidth()/2f,screen.getHeight()/2f);
         start_button.setText("Start");
+        start_button.setFont("Interface/Fonts/HumboldtFraktur.fnt");
+        start_button.setFontSize(screen.getWidth()/30f);
+        start_button.setTextPosition(0f,0);
+        //start_button.setTextAlign(BitmapFont.Align.Center);
+        start_button.setTextVAlign(BitmapFont.VAlign.Center);
         screen.addElement(start_button);
         
-        credits_button = new ButtonAdapter(screen,"credits", new Vector2f(0, 0)) {
+        credits_button = new ButtonAdapter(screen,"credits", new Vector2f(0, 0), new Vector2f(screen.getWidth()/8, screen.getHeight()/10)) {
             @Override
             public void onButtonMouseLeftUp(MouseButtonEvent evt, boolean toggled) {
-                stateManager.detach(stateManager.getState(MainMenuState.class));
-             
+                creditsGUI();
                 //throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
             }
+
+            
 
         };
         credits_button.setText("Credits");
         credits_button.setPosition(screen.getWidth()/2f-credits_button.getWidth()/2f,screen.getHeight()/2f + start_button.getHeight()+ 5);
-
+        credits_button.setFont("Interface/Fonts/HumboldtFraktur.fnt");
+        credits_button.setFontSize(screen.getWidth()/30f);
+        credits_button.setTextPosition(0f,0);
+        //start_button.setTextAlign(BitmapFont.Align.Center);
+        credits_button.setTextVAlign(BitmapFont.VAlign.Center);
         screen.addElement(credits_button);
         
+        screen.removeElement(credits_button);
+                screen.addElement(credits_button);
+
         app.getInputManager().setCursorVisible(true);
         //TODO: initialize your AppState, e.g. attach spatials to rootNode
         //this is called on the OpenGL thread after the AppState has been attached
@@ -143,14 +160,17 @@ public class MainMenuState extends AbstractAppState {
 
         time_info_l.showWithEffect();
         
-        Label pause_l = new Label(screen, "pause_button", new Vector2f(0,0),new Vector2f(200,0));
+        Element pause_l = new Label(screen, "pause_button", new Vector2f(0,0),new Vector2f(50,50),
+                new Vector4f(5,5,5,5),"Textures/pause.png");
         pause_l.setFontSize(Math.abs(Main.tlratio * 15));
-        pause_l.setTextAlign(BitmapFont.Align.Right);
+        pause_l.setTextAlign(BitmapFont.Align.Center);
         pause_l.setPosition(screen.getWidth()-pause_l.getWidth(),10);
-        pause_l.setText("Press 'P' to pause");
+        pause_l.setText("P");
+
         
         screen.addElement(pause_l);
         
+       
  
         LevelState level_state  = new LevelState(screen);
         stateManager.attach(level_state);
@@ -161,4 +181,68 @@ public class MainMenuState extends AbstractAppState {
         //e.g. remove all spatials from rootNode
         //this is called on the OpenGL thread after the AppState has been detached
     }
+    
+    private void creditsGUI() {
+        screen.removeElement(title);
+        screen.removeElement(start_button);
+        screen.removeElement(credits_button);
+        
+        credits_names = new Label(screen,"Names Info", new Vector2f(0,0),new Vector2f(screen.getWidth()/3f,screen.getHeight()));
+        credits_names.setText(" Joraaver Chahal \n \n Amarinder Chahal \n \n Suchaaver Chahal ");
+        credits_names.setPosition((screen.getWidth()/3f) * 2, 0);
+        credits_names.setTextAlign(BitmapFont.Align.Left);
+        credits_names.setTextVAlign(BitmapFont.VAlign.Center);
+        
+        screen.addElement(credits_names);
+        
+        credits_titles = new Label(screen,"Credits Info", new Vector2f(0,0),new Vector2f(screen.getWidth()/3f,screen.getHeight()));
+        credits_titles.setText("Programming \n \n Sound/FX \n \n Graphics/Art ");
+        credits_titles.setTextAlign(BitmapFont.Align.Right);
+        credits_titles.setTextVAlign(BitmapFont.VAlign.Center);
+       
+        
+        screen.addElement(credits_titles);
+        
+        credits_dots = new Label(screen,"Credits Dots", new Vector2f(0,0),new Vector2f(screen.getWidth()/3f,screen.getHeight()));
+        credits_dots.setText(".............................................. \n \n "
+                + ".............................................. \n \n "
+                + ".............................................. ");
+        credits_dots.setPosition(screen.getWidth()/3f, 0);
+        credits_dots.setTextAlign(BitmapFont.Align.Center);
+        credits_dots.setTextVAlign(BitmapFont.VAlign.Center);
+        
+        screen.addElement(credits_dots);
+        
+        back_button = new ButtonAdapter(screen,"back", new Vector2f(0, 0), new Vector2f(screen.getWidth()/12, screen.getHeight()/15)) {
+            @Override
+            public void onButtonMouseLeftUp(MouseButtonEvent evt, boolean toggled) {
+                homeGUI();
+                //throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+            }
+        };
+        back_button.setText("back");
+        back_button.setPosition(0,screen.getHeight()-back_button.getHeight());
+        back_button.setFont("Interface/Fonts/HumboldtFraktur.fnt");
+        back_button.setFontSize(screen.getWidth()/30f);
+        back_button.setTextPosition(0f,0);
+        //start_button.setTextAlign(BitmapFont.Align.Center);
+        back_button.setTextVAlign(BitmapFont.VAlign.Center);
+        screen.addElement(back_button);
+        
+        
+    }
+    
+    private void homeGUI() {
+        
+        screen.removeElement(credits_titles);
+        screen.removeElement(credits_names);
+        screen.removeElement(credits_dots);
+        screen.removeElement(back_button);
+        screen.addElement(start_button);
+        screen.addElement(credits_button);
+        screen.addElement(title);
+    }
+
+            
+
 }

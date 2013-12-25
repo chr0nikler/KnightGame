@@ -129,10 +129,11 @@ public class LevelState extends AbstractAppState {
         Quad bg = new Quad(1,1);
         Geometry geo = new Geometry("BG",bg);
         
-        Texture t = assetManager.loadTexture("Textures/background-transport.png");
+        Texture t = assetManager.loadTexture("Textures/background-cave.png");
         Material s_material = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
         s_material.setTexture("ColorMap", t);
-        geo.setQueueBucket(Bucket.Sky);
+        //geo.setQueueBucket(Bucket.Transparent); 
+        //geo.setQueueBucket(Bucket.Sky);
         geo.setCullHint(CullHint.Never);
         geo.setMaterial(s_material);
         s_material.getAdditionalRenderState().setBlendMode(RenderState.BlendMode.Alpha);
@@ -141,20 +142,13 @@ public class LevelState extends AbstractAppState {
         rootNode.attachChild(geo);
         
         System.out.println(cam.getFrustumTop()-cam.getFrustumBottom());
-        geo.move(cam.getFrustumLeft(),cam.getFrustumBottom(),0);
+        geo.move(cam.getFrustumLeft(),cam.getFrustumBottom(),-.5f);
         
         geo.setLocalScale(cam.getFrustumRight()- cam.getFrustumLeft(),cam.getFrustumTop()- cam.getFrustumBottom(),1);
-        
-        
-        
 
-        //app.getViewPort().setClearFlags(false, true, true);
-        
         generalSetup();
         
         createTitle();
-        
-        
         
         //createMappings();
         
@@ -208,7 +202,8 @@ public class LevelState extends AbstractAppState {
                     playerSprite.setPaused(false);
                     flipped = true;
                     playerSprite.rotate(0, 0, 180);
-                    playerSprite.move(.5f,.5f);
+                    playerSprite.move(.5f,.65f);
+                    playerSprite.getNode().move(0,0,10);
                 }
             } else if (right){
                 walkDirection.addLocal(camLeft.negate());
@@ -219,7 +214,8 @@ public class LevelState extends AbstractAppState {
                     playerSprite.setPaused(false);
                     flipped = false;
                     playerSprite.rotate(0,0,-180);
-                    playerSprite.move(-.5f,-.5f);
+                    playerSprite.move(-.5f,-.35f);
+                    playerSprite.getNode().move(0,0,10);
                 }
             }
            
@@ -228,8 +224,11 @@ public class LevelState extends AbstractAppState {
             for(int i = 0; i < l.getChildren().size(); i++){
                 if(((Node)l.getChild(i)).getChildren().size()==2){
                     if(!((Node)((Node)l.getChild(i)).getChild(1)).getControl(GhostControl.class).getOverlappingObjects().isEmpty()){
-                        Texture2D t = (Texture2D) assetManager.loadTexture("Textures/Tiles/ground.png");
-                        ((Geometry)((Node)l.getChild(i)).getChild(0)).getMaterial().setTexture("ColorMap", t);
+                        Sprite s = new Sprite("Textures/Tiles/ReiatsuMod.png", "invis_tile", assetManager, true, true, 25, 1, 0.05f, "NoLoop", "Continue");
+                        library.addSprite(s);
+                        ((Node)l.getChild(i)).attachChild(s.getNode());
+                        /*Texture2D t = (Texture2D) assetManager.loadTexture("Textures/Tiles/ground.png");
+                        ((Geometry)((Node)l.getChild(i)).getChild(0)).getMaterial().setTexture("ColorMap", t);*/
                     }
                 }
             }
@@ -237,10 +236,12 @@ public class LevelState extends AbstractAppState {
             if(!death_node.getControl(GhostControl.class).getOverlappingObjects().isEmpty()){
                 playerNode.getControl(CharacterControl.class).setPhysicsLocation(start);
                 for(int i = 0; i < l.getChildren().size(); i++){
-                    if(((Node)l.getChild(i)).getChildren().size()==2){
-
-                        Texture2D t = (Texture2D) assetManager.loadTexture("Textures/Tiles/transparent.png");
-                        ((Geometry)((Node)l.getChild(i)).getChild(0)).getMaterial().setTexture("ColorMap", t);
+                    if(((Node)l.getChild(i)).getChildren().size()==3){
+                        
+                        System.out.println("hi");
+                        ((Node)l.getChild(i)).detachChildNamed("invis_tile");
+                        /*Texture2D t = (Texture2D) assetManager.loadTexture("Textures/Tiles/transparent.png");
+                        ((Geometry)((Node)l.getChild(i)).getChild(0)).getMaterial().setTexture("ColorMap", t);*/
 
                     }
                 }
@@ -248,7 +249,6 @@ public class LevelState extends AbstractAppState {
             }
 
             if(!ending_node.getControl(GhostControl.class).getOverlappingObjects().isEmpty()){
-                Main.level_count +=1;
                 app.getInputManager().removeListener(actionListener);
                 stateManager.detach(stateManager.getState(LevelState.class));
             }
@@ -279,19 +279,25 @@ public class LevelState extends AbstractAppState {
     public void cleanup() {
         super.cleanup();
         
-        stateManager.detach(bas);
-        bas = new BulletAppState();
-        stateManager.attach(bas);
-        bas.setDebugEnabled(true);
-        rootNode.detachAllChildren();
+        if(Main.level_count != 1){
+            Main.level_count +=1;
         
-        for(int i = 0; i < title_elements.length; i++){
-            screen.removeElement(title_elements[i]);
+            stateManager.detach(bas);
+            bas = new BulletAppState();
+            stateManager.attach(bas);
+            bas.setDebugEnabled(false);
+            rootNode.detachAllChildren();
+
+            for(int i = 0; i < title_elements.length; i++){
+                screen.removeElement(title_elements[i]);
+            }
+
+            Main.current_time = Float.parseFloat(time_l.getText());
+            LevelState level_state = new LevelState(screen);
+            stateManager.attach(level_state);
+        } else {
+            System.out.println("DONE");
         }
-        
-        Main.current_time = Float.parseFloat(time_l.getText());
-        LevelState level_state = new LevelState(screen);
-        stateManager.attach(level_state);
    
 
 
@@ -413,6 +419,7 @@ public class LevelState extends AbstractAppState {
         library.addSprite(warp);
         ending_node.attachChild(warp.getNode());
         warp.move(-.5f, -.5f);
+        warp.getNode().move(0,0,10);
         bas.getPhysicsSpace().add(ending_node);
         
         rootNode.attachChild(ending_node);
@@ -428,7 +435,8 @@ public class LevelState extends AbstractAppState {
         
         playerNode = new Node();
         playerNode.attachChild(playerSprite.getNode());
-        playerSprite.move(-.5f,-.5f);
+        playerSprite.move(-.5f,-.35f);
+        playerSprite.getNode().move(0,0,10);
 
         CapsuleCollisionShape capsuleShape = new CapsuleCollisionShape(.3f,.15f);
         
