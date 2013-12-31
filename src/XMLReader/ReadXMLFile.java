@@ -21,7 +21,9 @@ import com.jme3.texture.Image;
 import com.jme3.texture.Texture2D;
 import com.jme3.texture.plugins.AWTLoader;
 import java.awt.image.BufferedImage;
+import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Vector;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -35,7 +37,7 @@ import org.xml.sax.helpers.DefaultHandler;
 public class ReadXMLFile {
  
     AssetManager asset_manager;
-    String xml_to_read;
+    InputStream xml_to_read;
     private int map_width;
     private int map_height;
     private int tile_width;
@@ -52,7 +54,7 @@ public class ReadXMLFile {
     Vector3f start;
     Vector3f end;
     
-   public ReadXMLFile(String to_read,AssetManager as, BulletAppState bas){
+   public ReadXMLFile(InputStream to_read,AssetManager as, BulletAppState bas){
        asset_manager = as;
        xml_to_read = to_read;
        this.bas = bas;
@@ -243,7 +245,7 @@ public class ReadXMLFile {
                        (source_x*current.getTile_width(), source_y*current.getTile_height(), current.getTile_width(), current.getTile_height(), null,0, current.getTile_width()), 0, current.getTile_width());
               
                 Quad b = new Quad(1,1); // create cube shape
-                Geometry geom = new Geometry("Box", b);  // create cube geometry from the shape
+                Geometry geom = new Geometry("Quad", b);  // create cube geometry from the shape
                 AWTLoader awtl = new AWTLoader();
                 //geom.setLocalScale(1, 10, 0);
                 Image i = awtl.load(tile,true);

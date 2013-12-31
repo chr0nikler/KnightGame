@@ -58,7 +58,7 @@ public class Sprite{
         Texture s_spritesheet = assetManager.loadTexture(imageLocation);
        
         s_spritesheet.setWrap(Texture.WrapMode.Repeat);
-        Quad s_quad = new Quad((int)(1), (int)(1));
+        Quad s_quad = new Quad((s_spritesheet.getImage().getWidth()/(float)s_frames)/(((float)s_spritesheet.getImage().getHeight())/s_rows),1);
         s_geometry = new Geometry(name, s_quad);
         Material s_material = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
         s_material.setTexture("ColorMap", s_spritesheet);

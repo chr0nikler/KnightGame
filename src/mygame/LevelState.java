@@ -15,12 +15,16 @@ import com.jme3.app.SimpleApplication;
 import com.jme3.app.state.AbstractAppState;
 import com.jme3.app.state.AppStateManager;
 import com.jme3.asset.AssetManager;
+import com.jme3.audio.AudioNode;
+import com.jme3.audio.AudioSource;
 import com.jme3.bullet.BulletAppState;
 import com.jme3.bullet.collision.shapes.BoxCollisionShape;
 import com.jme3.bullet.collision.shapes.CapsuleCollisionShape;
 import com.jme3.bullet.control.CharacterControl;
 import com.jme3.bullet.control.GhostControl;
 import com.jme3.bullet.control.RigidBodyControl;
+import com.jme3.export.binary.BinaryExporter;
+import com.jme3.font.BitmapFont;
 import com.jme3.input.KeyInput;
 import com.jme3.input.controls.ActionListener;
 import com.jme3.input.controls.KeyTrigger;
@@ -45,11 +49,17 @@ import com.jme3.texture.Texture;
 import com.jme3.texture.Texture2D;
 import com.jme3.ui.Picture;
 import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.Vector;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import static mygame.Main.engine;
 import tonegod.gui.controls.text.Label;
 import tonegod.gui.core.Element;
 import tonegod.gui.core.Screen;
+import tonegod.gui.effects.Effect;
 
 /**
  *
@@ -57,15 +67,19 @@ import tonegod.gui.core.Screen;
  */
 public class LevelState extends AbstractAppState {
     SpriteLibrary library;
+    Sprite playerIdleSprite;
+    Sprite playerJumpSprite;
     Label time_l;
     BulletAppState bas;
     Sprite playerSprite;
-    Sprite playerSprite2;
+    Sprite playerFallSprite;
     int gravity = -80;
     Vector3f playerVelocity = new Vector3f(0,gravity,0);
     Node playerNode;
     boolean jumping = false;
+    Element level_words;
     boolean on_ground = false;
+    boolean idle = false;
     Node l;
     BufferedImage level;
     BufferedImage scaled_level;
@@ -81,6 +95,8 @@ public class LevelState extends AbstractAppState {
     Vector3f end;
     Node ending_node;
     
+    AudioNode footstep;
+    
     private ReadXMLFile rxf;
     
     SimpleApplication app;
@@ -95,11 +111,24 @@ public class LevelState extends AbstractAppState {
     Element word;
     String[] words;
     Element[] title_elements;
+    private boolean complete = false;
+    private boolean facingLeft = false;
+    private boolean jumped;
+    private boolean jumpingLeft;
+    private boolean fall;
+    private float this_pos;
+    private float last_pos = -10000;
+    private boolean fallingLeft;
+    private boolean resetJump = false;
+    private boolean started;
+    private float frameCount = 0;
+    private Element pause_l;
 
     LevelState(Screen screen){
         this.screen = screen;
         this.time_l = (Label)screen.getElementById("time");
         this.time_info_l = screen.getElementById("time_info");
+        this.pause_l = screen.getElementById("pause_button");
         
        
     }
@@ -118,18 +147,14 @@ public class LevelState extends AbstractAppState {
         
         
         
-        
         library = new SpriteLibrary("Library 1", false);
         SpriteLibrary.setL_guiNode(rootNode);
         engine.addLibrary(library);
-        
-        float w = cam.getFrustumLeft()- cam.getFrustumRight(); 
-        float h = cam.getFrustumTop()- cam.getFrustumBottom(); 
 
         Quad bg = new Quad(1,1);
         Geometry geo = new Geometry("BG",bg);
         
-        Texture t = assetManager.loadTexture("Textures/background-cave.png");
+        Texture t = assetManager.loadTexture("Textures/background-jungle.png");
         Material s_material = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
         s_material.setTexture("ColorMap", t);
         //geo.setQueueBucket(Bucket.Transparent); 
@@ -141,18 +166,32 @@ public class LevelState extends AbstractAppState {
         
         rootNode.attachChild(geo);
         
-        System.out.println(cam.getFrustumTop()-cam.getFrustumBottom());
         geo.move(cam.getFrustumLeft(),cam.getFrustumBottom(),-.5f);
         
         geo.setLocalScale(cam.getFrustumRight()- cam.getFrustumLeft(),cam.getFrustumTop()- cam.getFrustumBottom(),1);
 
         generalSetup();
         
+        String level_word = "Stage " + (Main.level_count+1) + " of " + Main.LEVELS;
+        
+        level_words = new Element(screen, "level_words",new Vector2f(0,0),new Vector2f(screen.getWidth(),screen.getHeight()),
+                new Vector4f(5,5,5,5),"Textures/TransparentYellow.png");
+        
+        level_words.setText(level_word);
+        
+        level_words.setTextAlign(BitmapFont.Align.Center);
+        level_words.setTextVAlign(BitmapFont.VAlign.Center);
+        level_words.setFontSize(Math.abs(tlratio)*30);
+        level_words.setFont("Interface/Fonts/KnightsQuest.fnt");
+        level_words.setFontColor(ColorRGBA.Black);
+        screen.addElement(level_words);
+        
         createTitle();
         
         //createMappings();
+        InputStream xml = this.getClass().getClassLoader().getResourceAsStream("Textures/" + Main.levels[Main.level_count]);
         
-        rxf = new ReadXMLFile("assets/Textures/" + Main.levels[Main.level_count],assetManager,bas);
+        rxf = new ReadXMLFile(xml,assetManager,bas);
         rxf.parse();
         l = rxf.createLevel(cam);
         
@@ -169,7 +208,8 @@ public class LevelState extends AbstractAppState {
 
         game_timer = new LwjglTimer();
 
-        
+        footstep = new AudioNode(assetManager, "Sounds/Footstep.wav");
+        //footstep.setVolume(.2f);
         
        
         //TODO: initialize your AppState, e.g. attach spatials to rootNode
@@ -183,7 +223,20 @@ public class LevelState extends AbstractAppState {
         camDir.y = 0;
         camLeft.y = 0;
         
-        if(stateManager.getState(LevelState.class).isEnabled()){
+        
+        if(game_timer.getTimeInSeconds() < 1.5f && !started){
+            return;
+        } else {
+            if(!started){
+                screen.removeElement(level_words);
+                game_timer.reset();
+                started = true;
+                screen.addElement(title_elements[0]);
+                title_elements[0].showWithEffect();
+            }
+        }
+        
+        if(stateManager.getState(LevelState.class).isEnabled() ){
             try{
                time_l.setText((String)(Float.toString(game_timer.getTimeInSeconds() + Main.current_time)).subSequence(0, 5));
             } catch(Exception e) {
@@ -193,29 +246,135 @@ public class LevelState extends AbstractAppState {
             Main.engine.update(tpf);
 
             walkDirection.set(0, 0, 0);
-            if (left)  {
-                walkDirection.addLocal(camLeft);
-                if(!flipped){
-                    playerSprite.getNode().setLocalTranslation(new Vector3f(0,0,0));
-                    playerSprite.setPaused(true);
-                    playerSprite.scaleTexture(new Vector2f(1f,-1f));
-                    playerSprite.setPaused(false);
-                    flipped = true;
-                    playerSprite.rotate(0, 0, 180);
-                    playerSprite.move(.5f,.65f);
-                    playerSprite.getNode().move(0,0,10);
+
+            if(!player_character.onGround() && ((!jumped && !fall) || (left && !jumpingLeft) || (right && jumpingLeft))  ){
+                playerNode.detachAllChildren();
+                playerNode.attachChild(playerJumpSprite.getNode());
+                if((flipped && !jumpingLeft && !jumped) || (left && !jumpingLeft)){
+                    playerJumpSprite.getNode().setLocalTranslation(new Vector3f(0,0,0));
+                    playerJumpSprite.setPaused(true);
+                    playerJumpSprite.scaleTexture(new Vector2f(1f,-1f));                    
+                    jumpingLeft = true;
+                    playerJumpSprite.rotate(0,0,-180);
+                    playerJumpSprite.move(.2f,.65f);
+                    playerJumpSprite.getNode().move(0,0,10);
+                } else if((!flipped && jumpingLeft && !jumped) || (right && jumpingLeft)){
+                    playerJumpSprite.getNode().setLocalTranslation(new Vector3f(0,0,0));
+                    playerJumpSprite.setPaused(true);
+                    playerJumpSprite.scaleTexture(new Vector2f(1f,-1f));
+                    jumpingLeft = false;
+                    playerJumpSprite.rotate(0,0,-180);
+                    playerJumpSprite.move(-.2f,-.35f);
+                    playerJumpSprite.getNode().move(0,0,10);
                 }
-            } else if (right){
-                walkDirection.addLocal(camLeft.negate());
-                if(flipped){
-                    playerSprite.getNode().setLocalTranslation(new Vector3f(0,0,0));
-                    playerSprite.setPaused(true);
-                    playerSprite.scaleTexture(new Vector2f(1f,-1f));
-                    playerSprite.setPaused(false);
-                    flipped = false;
-                    playerSprite.rotate(0,0,-180);
-                    playerSprite.move(-.5f,-.35f);
-                    playerSprite.getNode().move(0,0,10);
+                if(!resetJump){
+                    playerJumpSprite.setPaused(false);
+                }
+                jumped = true;
+            } else {
+                this_pos = playerNode.getLocalTranslation().getY();
+                if(!fall || (!fallingLeft && (left || jumpingLeft)) || (fallingLeft && (right || !jumpingLeft))){    
+                    if (last_pos > this_pos){
+                        playerNode.detachAllChildren();
+                        playerNode.attachChild(playerFallSprite.getNode());
+                        if(!fallingLeft && (flipped || left || jumpingLeft) ){
+                            playerFallSprite.getNode().setLocalTranslation(new Vector3f(0,0,0));
+                            playerFallSprite.setPaused(true);
+                            playerFallSprite.scaleTexture(new Vector2f(1f,-1f));
+                            fallingLeft = true;
+                            playerFallSprite.rotate(0,0,-180);
+                            playerFallSprite.move(.2f,.65f);
+                            playerFallSprite.getNode().move(0,0,10);
+                        } else if (fallingLeft && (!flipped || right || !jumpingLeft)){
+                            playerFallSprite.getNode().setLocalTranslation(new Vector3f(0,0,0));
+                            playerFallSprite.setPaused(true);
+                            playerFallSprite.scaleTexture(new Vector2f(1f,-1f));
+                            fallingLeft = false;
+                            playerFallSprite.rotate(0,0,-180);
+                            playerFallSprite.move(-.2f,-.35f);
+                            playerFallSprite.getNode().move(0,0,10);
+                        }
+                        if(!resetJump){
+                            playerFallSprite.setPaused(false);
+                        }
+                        fall = true;
+                    }
+                    last_pos = this_pos;
+                }
+                
+                if (left)  {
+                    
+                    idle = false;
+                    walkDirection.addLocal(camLeft);
+                    if(player_character.onGround()){
+                        footstep.play();
+                        fall = false;
+                        jumped = false;
+                        playerNode.detachAllChildren();
+                        playerNode.attachChild(playerSprite.getNode());
+                        if(!flipped){           
+                            playerSprite.getNode().setLocalTranslation(new Vector3f(0,0,0));
+                            playerSprite.setPaused(true);
+                            playerSprite.scaleTexture(new Vector2f(1f,-1f));
+                            playerSprite.setPaused(false);
+                            flipped = true;
+                            playerSprite.rotate(0, 0, 180);
+                            playerSprite.move(.4f,.65f);
+                            playerSprite.getNode().move(0,0,10);
+                        }
+                    }
+                } else if (right){
+                    
+                    idle =false;
+                    walkDirection.addLocal(camLeft.negate());
+                    if(player_character.onGround()){
+                        footstep.play();
+                        jumped = false;
+                        fall = false;
+                        playerNode.detachAllChildren();
+                        playerNode.attachChild(playerSprite.getNode());
+                        if(flipped){
+                            playerSprite.getNode().setLocalTranslation(new Vector3f(0,0,0));
+                            playerSprite.setPaused(true);
+                            playerSprite.scaleTexture(new Vector2f(1f,-1f));
+                            playerSprite.setPaused(false);
+                            flipped = false;
+                            playerSprite.rotate(0,0,-180);
+                            playerSprite.move(-.4f,-.35f);
+                            playerSprite.getNode().move(0,0,10);
+                        }
+                    }
+                } else {
+                   /*if(footstep.getStatus() == AudioSource.Status.Stopped)
+                   footstep.stop();*/
+                   if(player_character.onGround()){
+                       fall = false;
+                       jumped = false;
+                       playerNode.detachAllChildren();
+                       playerNode.attachChild(playerIdleSprite.getNode());
+                       if(!facingLeft && !idle && (flipped  || fallingLeft)){
+                            playerIdleSprite.getNode().setLocalTranslation(new Vector3f(0,0,0));
+                            playerIdleSprite.setPaused(true);
+                            playerIdleSprite.scaleTexture(new Vector2f(1f,-1f));
+                            playerIdleSprite.setPaused(false);
+                            idle = true;
+                            facingLeft = true;
+                            playerIdleSprite.rotate(0,0,-180);
+                            playerIdleSprite.move(.1f,.65f);
+                            playerIdleSprite.getNode().move(0,0,10);
+                       } else if(facingLeft && !idle && (!flipped  || !fallingLeft)){
+                            playerIdleSprite.getNode().setLocalTranslation(new Vector3f(0,0,0));
+                            playerIdleSprite.setPaused(true);
+                            playerIdleSprite.scaleTexture(new Vector2f(1f,-1f));
+                            playerIdleSprite.setPaused(false);
+                            idle = true;
+                            facingLeft = false;
+                            playerIdleSprite.rotate(0,0,-180);
+                            playerIdleSprite.move(-.1f,-.35f);
+                            playerIdleSprite.getNode().move(0,0,10);
+                       }
+                   }
+
                 }
             }
            
@@ -224,7 +383,7 @@ public class LevelState extends AbstractAppState {
             for(int i = 0; i < l.getChildren().size(); i++){
                 if(((Node)l.getChild(i)).getChildren().size()==2){
                     if(!((Node)((Node)l.getChild(i)).getChild(1)).getControl(GhostControl.class).getOverlappingObjects().isEmpty()){
-                        Sprite s = new Sprite("Textures/Tiles/ReiatsuMod.png", "invis_tile", assetManager, true, true, 25, 1, 0.05f, "NoLoop", "Continue");
+                        Sprite s = new Sprite("Textures/Tiles/" + Main.invis_tiles[2], "invis_tile", assetManager, true, true, 24, 1, 0.05f, "NoLoop", "Continue");
                         library.addSprite(s);
                         ((Node)l.getChild(i)).attachChild(s.getNode());
                         /*Texture2D t = (Texture2D) assetManager.loadTexture("Textures/Tiles/ground.png");
@@ -238,7 +397,6 @@ public class LevelState extends AbstractAppState {
                 for(int i = 0; i < l.getChildren().size(); i++){
                     if(((Node)l.getChild(i)).getChildren().size()==3){
                         
-                        System.out.println("hi");
                         ((Node)l.getChild(i)).detachChildNamed("invis_tile");
                         /*Texture2D t = (Texture2D) assetManager.loadTexture("Textures/Tiles/transparent.png");
                         ((Geometry)((Node)l.getChild(i)).getChild(0)).getMaterial().setTexture("ColorMap", t);*/
@@ -249,10 +407,13 @@ public class LevelState extends AbstractAppState {
             }
 
             if(!ending_node.getControl(GhostControl.class).getOverlappingObjects().isEmpty()){
+                System.out.println("DONE!!!!");
                 app.getInputManager().removeListener(actionListener);
+                complete = true;
                 stateManager.detach(stateManager.getState(LevelState.class));
             }
         }
+        frameCount++;
     }
     
     @Override
@@ -267,44 +428,84 @@ public class LevelState extends AbstractAppState {
             player_character.setEnabled(false);
             left = false;
             right = false;
-            
+            app.getInputManager().setCursorVisible(true);
         } else {
             createMappings();
             game_timer.reset();
             player_character.setEnabled(true);
+            app.getInputManager().setCursorVisible(false);
+            
         }
     }
     
     @Override
     public void cleanup() {
         super.cleanup();
-        
-        if(Main.level_count != 1){
-            Main.level_count +=1;
-        
-            stateManager.detach(bas);
-            bas = new BulletAppState();
-            stateManager.attach(bas);
-            bas.setDebugEnabled(false);
-            rootNode.detachAllChildren();
+        System.out.println("CLEANING");
+        if(complete){
+            String userHome = System.getProperty("user.home");
+            File file = new File(userHome+"/KnightGame/levels.j3o");
+            File times = new File(userHome+"/KnightGame/time.j3o");
+            BinaryExporter exporter = BinaryExporter.getInstance();
+            Node level_count = new Node("level_count");
+            level_count.setUserData("Count", Main.level_count+1);
+            Node time = new Node("time");
+            time.setUserData("time", Float.parseFloat(time_l.getText()));
+            try {
+                exporter.save(level_count, file);
+                exporter.save(time, times);
+            } catch (IOException ex) {
+                Logger.getLogger(LevelState.class.getName()).log(Level.SEVERE, null, ex);
+            }
 
+            if(Main.level_count+1 != Main.LEVELS){
+                Main.level_count +=1;
+
+                
+                stateManager.detach(bas);
+                bas = new BulletAppState();
+                stateManager.attach(bas);
+                bas.setDebugEnabled(false);
+                rootNode.detachAllChildren();
+
+                for(int i = 0; i < title_elements.length; i++){
+                    screen.removeElement(title_elements[i]);
+                }
+
+                
+                Main.current_time = Float.parseFloat(time_l.getText());
+                LevelState level_state = new LevelState(screen);
+                stateManager.attach(level_state);
+            } else {
+                Main.level_count-=1;
+                for(int i = 0; i < title_elements.length; i++){
+                    screen.removeElement(title_elements[i]);
+                }
+                screen.removeElement(time_info_l);
+                screen.removeElement(time_l);
+                screen.removeElement(pause_l);
+                stateManager.detach(bas);
+                rootNode.detachAllChildren();
+                CreditsState credits = new CreditsState(screen);
+                stateManager.attach(credits);
+            }
+        } else {
             for(int i = 0; i < title_elements.length; i++){
                 screen.removeElement(title_elements[i]);
             }
-
-            Main.current_time = Float.parseFloat(time_l.getText());
-            LevelState level_state = new LevelState(screen);
-            stateManager.attach(level_state);
-        } else {
-            System.out.println("DONE");
+            screen.removeElement(time_info_l);
+            screen.removeElement(time_l);
+            screen.removeElement(pause_l);
+            stateManager.detach(bas);
+            bas = new BulletAppState();
+            stateManager.attach(bas);
+            bas.setDebugEnabled(true);
+            rootNode.detachAllChildren();
+            complete = false;
+            MainMenuState main_state = new MainMenuState(screen);
+            stateManager.attach(main_state);
         }
-   
-
-
         
-        //TODO: clean up what you initialized in the initialize method,
-        //e.g. remove all spatials from rootNode
-        //this is called on the OpenGL thread after the AppState has been detached
     }
     
     private ActionListener actionListener = new ActionListener() {
@@ -314,14 +515,12 @@ public class LevelState extends AbstractAppState {
                 if (binding.equals("Left")) {
                     if (value) left = true;
                     else left = false;
-                    
                 } else if (binding.equals("Right")) {
                     if (value) right = true;
                     else right = false;
                 } else if (binding.equals("Jump") && value){
                     player_character.jump();
                 } else if (binding.equals("Pause") && value){
-                    System.out.println("Pausing");
                     stateManager.getState(LevelState.class).setEnabled(false);
                 }
             }
@@ -362,9 +561,9 @@ public class LevelState extends AbstractAppState {
                     float w = ((ObjectDetails)cg.getGroup().get(j)).getWidth();
                     float h = ((ObjectDetails)cg.getGroup().get(j)).getHeight();
                     
-                    x = (x/32f)  * ((cam.getFrustumRight()-cam.getFrustumLeft())/rxf.getMap_width());///(rxf.getMap_width()*32f))*(cam.getFrustumRight());
-                    y = (rxf.getMap_height() -(y/32f)) * (cam.getFrustumTop()-cam.getFrustumBottom())/rxf.getMap_height();//- cam.getFrustumTop();//((1- (y/(32f*rxf.getMap_height()))))-(h/(32f*rxf.getMap_height()))-rxf.getMap_height()/2;//+cam.getFrustumTop())-h;
-                    w = w/32f * ((cam.getFrustumRight()-cam.getFrustumLeft())/rxf.getMap_width());///(cam.getFrustumRight()*2);
+                    x = (x/32f)  * ((cam.getFrustumRight()-cam.getFrustumLeft())/rxf.getMap_width());
+                    y = (rxf.getMap_height() -(y/32f)) * (cam.getFrustumTop()-cam.getFrustumBottom())/rxf.getMap_height();
+                    w = w/32f * ((cam.getFrustumRight()-cam.getFrustumLeft())/rxf.getMap_width());
                     h = h/32f * ((cam.getFrustumTop()-cam.getFrustumBottom())/rxf.getMap_height());
                     
                     RigidBodyControl floorMesh = new RigidBodyControl(new BoxCollisionShape(new Vector3f(w/2f,h/2f,1)),0.0f);
@@ -428,17 +627,38 @@ public class LevelState extends AbstractAppState {
 
     private void setupPlayer() {
         playerSprite = new Sprite("Textures/KnightForward.png", "Player", assetManager, true, true, 24, 1, 0.05f, "Loop", "Start");
-
+        playerIdleSprite = new Sprite("Textures/KnightIdle.png", "PlayerIdle", assetManager, true, true, 20, 1, 0.05f, "Loop", "Start");
+        playerJumpSprite = new Sprite("Textures/KnightJump.png", "PlayerJump", assetManager, true, true, 5, 1, .05f, "NoLoop", "Start");
+        playerFallSprite = new Sprite("Textures/KnightFall.png", "FallJump", assetManager, true, true, 5, 1, .08f, "NoLoop", "Start");
+        
         playerSprite.setPaused(false);
+        playerIdleSprite.setPaused(false);
+        playerJumpSprite.setPaused(false);
+        playerFallSprite.setPaused(false);
         library.addSprite(playerSprite);
+        library.addSprite(playerIdleSprite);
+        library.addSprite(playerJumpSprite);
+        library.addSprite(playerFallSprite);
         engine.addLibrary(library);
         
         playerNode = new Node();
         playerNode.attachChild(playerSprite.getNode());
-        playerSprite.move(-.5f,-.35f);
+        playerNode.attachChild(playerIdleSprite.getNode());
+        playerNode.attachChild(playerJumpSprite.getNode());
+        playerNode.attachChild(playerFallSprite.getNode());
+        playerIdleSprite.move(-.1f,-.35f);
+        playerIdleSprite.getNode().move(0,0,10);
+        playerNode.detachChild(playerIdleSprite.getNode());
+        playerJumpSprite.move(-.2f,-.35f);
+        playerJumpSprite.getNode().move(0,0,10);
+        playerNode.detachChild(playerJumpSprite.getNode());
+        playerFallSprite.move(-.2f,-.35f);
+        playerFallSprite.getNode().move(0,0,10);
+        playerNode.detachChild(playerFallSprite.getNode());
+        playerSprite.move(-.4f,-.35f);
         playerSprite.getNode().move(0,0,10);
 
-        CapsuleCollisionShape capsuleShape = new CapsuleCollisionShape(.3f,.15f);
+        CapsuleCollisionShape capsuleShape = new CapsuleCollisionShape(.2f,.3f);
         
         player_character = new CharacterControl(capsuleShape, .2f);
         player_character.setFallSpeed(20f);
@@ -454,6 +674,40 @@ public class LevelState extends AbstractAppState {
 
     private void createTitle() {
         
+       /* String title = "Stage " + Main.level_count + " of " + Main.LEVELS;
+        
+        
+        title_elements = new Element[1];
+        title_elements[0] = new Element(screen, "title_words",new Vector2f(0,0),new Vector2f(Math.abs(tlratio) * title.length()*10 + 10,0),
+                new Vector4f(5,5,5,5),null);
+        title_elements[0].setText(title);
+        title_elements[0].setPosition(20,50);
+        title_elements[0].setFontSize(Math.abs(tlratio)*20);
+        title_elements[0].setFont("Interface/Fonts/KnightsQuest.fnt");
+        Effect effect = new Effect(
+            Effect.EffectType.SlideIn, // The type of effect to use
+            Effect.EffectEvent.Show, // The event that the effect is associated with
+            1f // The duration of time over which the effect executes (2.2 seconds)
+        ); 
+        effect.setEffectDirection(Effect.EffectDirection.Left);
+        title_elements[0].addEffect(effect);
+        
+        screen.addElement(title_elements[0]);
+        
+        title_elements[0].hide();
+        title_elements[0].showWithEffect();
+        
+        Effect effect2 = new Effect(
+            Effect.EffectType.SlideOut, // The type of effect to use
+            Effect.EffectEvent.Hide, // The event that the effect is associated with
+            1f // The duration of time over which the effect executes (2.2 seconds)
+        ); */
+        
+        /*effect2.setEffectDirection(Effect.EffectDirection.Left);
+        title_elements[0].addEffect(effect2);
+
+ 
+        title_elements[0].hideWithEffect();*/
         String title = Main.titles[Main.level_count];
         
         title_elements = new Element[1];
@@ -462,8 +716,20 @@ public class LevelState extends AbstractAppState {
         title_elements[0].setText(title);
         title_elements[0].setPosition(20,50);
         title_elements[0].setFontSize(Math.abs(tlratio)*20);
-             //title_elements[i];
-        screen.addElement(title_elements[0]);
+        title_elements[0].setFont("Interface/Fonts/KnightsQuest.fnt");
+         
+        Effect effect = new Effect(
+            Effect.EffectType.SlideIn, // The type of effect to use
+            Effect.EffectEvent.Show, // The event that the effect is associated with
+            1f // The duration of time over which the effect executes (2.2 seconds)
+        ); 
+        
+        effect.setEffectDirection(Effect.EffectDirection.Left);
+        title_elements[0].addEffect(effect);
+        
+        //screen.addElement(title_elements[0]);
+       // title_elements[0].hide();
+       
         /*words = title.split("\\s+");
         
         title_elements = new Element[words.length];

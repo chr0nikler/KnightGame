@@ -79,7 +79,7 @@ public class SpriteEngine {
                                         t_sprite.updateVertexArray(a, t_sprite.getVertexArray()[a] - ((float)(t_sprite.getFrames()-1)/t_sprite.getFrames()));
                                     }
                                 }                        
-                                t_sprite.getVertexBuffer().updateData(BufferUtils.createFloatBuffer(t_sprite.getVertexArray()));
+                                //t_sprite.getVertexBuffer().updateData(BufferUtils.createFloatBuffer(t_sprite.getVertexArray()));
                                 t_sprite.setPaused(true);
                                 t_sprite.setTime(0);
                                 t_sprite.setCurrentFrame(0);
