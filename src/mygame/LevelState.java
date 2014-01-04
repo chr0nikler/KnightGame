@@ -90,6 +90,7 @@ public class LevelState extends AbstractAppState {
     LwjglTimer game_timer;
     float tlratio;
     private Node death_node;
+    AudioNode landed;
     private boolean flipped = false;
     Vector3f start;
     Vector3f end;
@@ -154,7 +155,18 @@ public class LevelState extends AbstractAppState {
         Quad bg = new Quad(1,1);
         Geometry geo = new Geometry("BG",bg);
         
-        Texture t = assetManager.loadTexture("Textures/background-jungle.png");
+        Texture t = null;
+        if(Main.level_count < 4){
+            t = assetManager.loadTexture("Textures/background-transport.png");
+        } else if (Main.level_count < 8){
+            t = assetManager.loadTexture("Textures/background-cave.png");
+        } else if (Main.level_count < 12){
+            t = assetManager.loadTexture("Textures/background-glacier.png");
+        } else if (Main.level_count < 16){
+            t = assetManager.loadTexture("Textures/background-jungle.png");
+        } else if (Main.level_count < 20){
+            t = assetManager.loadTexture("Textures/background-lair.png");
+        }
         Material s_material = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
         s_material.setTexture("ColorMap", t);
         //geo.setQueueBucket(Bucket.Transparent); 
@@ -174,8 +186,22 @@ public class LevelState extends AbstractAppState {
         
         String level_word = "Stage " + (Main.level_count+1) + " of " + Main.LEVELS;
         
-        level_words = new Element(screen, "level_words",new Vector2f(0,0),new Vector2f(screen.getWidth(),screen.getHeight()),
+        if(Main.level_count < 4){
+            level_words = new Element(screen, "level_words",new Vector2f(0,0),new Vector2f(screen.getWidth(),screen.getHeight()),
                 new Vector4f(5,5,5,5),"Textures/TransparentYellow.png");
+        } else if (Main.level_count < 8){
+            level_words = new Element(screen, "level_words",new Vector2f(0,0),new Vector2f(screen.getWidth(),screen.getHeight()),
+                new Vector4f(5,5,5,5),"Textures/TransparentBrown.png");
+        } else if (Main.level_count < 12){
+            level_words = new Element(screen, "level_words",new Vector2f(0,0),new Vector2f(screen.getWidth(),screen.getHeight()),
+                new Vector4f(5,5,5,5),"Textures/TransparentBlue.png");
+        } else if (Main.level_count < 16){
+            level_words = new Element(screen, "level_words",new Vector2f(0,0),new Vector2f(screen.getWidth(),screen.getHeight()),
+                new Vector4f(5,5,5,5),"Textures/TransparentGreen.png");
+        } else if (Main.level_count < 20){
+            level_words = new Element(screen, "level_words",new Vector2f(0,0),new Vector2f(screen.getWidth(),screen.getHeight()),
+                new Vector4f(5,5,5,5),"Textures/TransparentGrey.png");
+        } 
         
         level_words.setText(level_word);
         
@@ -208,8 +234,9 @@ public class LevelState extends AbstractAppState {
 
         game_timer = new LwjglTimer();
 
-        footstep = new AudioNode(assetManager, "Sounds/Footstep.wav");
-        //footstep.setVolume(.2f);
+        footstep = new AudioNode(assetManager, "Sounds/TSBFootstep.wav");
+        landed = new AudioNode(assetManager, "Sounds/JumpLandSFX.wav");
+        landed.setVolume(1.0f);
         
        
         //TODO: initialize your AppState, e.g. attach spatials to rootNode
@@ -218,6 +245,9 @@ public class LevelState extends AbstractAppState {
     
     @Override
     public void update(float tpf) {
+        if(Main.bg.getStatus() == AudioSource.Status.Stopped){
+            Main.bg.play();
+        }
         Vector3f camDir = cam.getDirection().clone().multLocal(0.25f);
         Vector3f camLeft = cam.getLeft().clone().multLocal(0.25f);
         camDir.y = 0;
@@ -246,6 +276,11 @@ public class LevelState extends AbstractAppState {
             Main.engine.update(tpf);
 
             walkDirection.set(0, 0, 0);
+            
+            if(player_character.onGround() && jumped && fall){
+                landed.setPitch(2.0f);
+                landed.playInstance();
+            }
 
             if(!player_character.onGround() && ((!jumped && !fall) || (left && !jumpingLeft) || (right && jumpingLeft))  ){
                 playerNode.detachAllChildren();
@@ -383,7 +418,18 @@ public class LevelState extends AbstractAppState {
             for(int i = 0; i < l.getChildren().size(); i++){
                 if(((Node)l.getChild(i)).getChildren().size()==2){
                     if(!((Node)((Node)l.getChild(i)).getChild(1)).getControl(GhostControl.class).getOverlappingObjects().isEmpty()){
-                        Sprite s = new Sprite("Textures/Tiles/" + Main.invis_tiles[2], "invis_tile", assetManager, true, true, 24, 1, 0.05f, "NoLoop", "Continue");
+                        Sprite s = null;
+                        if(Main.level_count < 4){
+                            s = new Sprite("Textures/Tiles/" + Main.invis_tiles[0], "invis_tile", assetManager, true, true, 25, 1, 0.05f, "NoLoop", "Continue");
+                        } else if (Main.level_count < 8){
+                            s = new Sprite("Textures/Tiles/" + Main.invis_tiles[1], "invis_tile", assetManager, true, true, 24, 1, 0.05f, "NoLoop", "Continue");                            
+                        }else if (Main.level_count < 12){
+                            s = new Sprite("Textures/Tiles/" + Main.invis_tiles[2], "invis_tile", assetManager, true, true, 8, 1, 0.05f, "NoLoop", "Continue");                            
+                        }else if (Main.level_count < 16){
+                            s = new Sprite("Textures/Tiles/" + Main.invis_tiles[3], "invis_tile", assetManager, true, true, 5, 1, 0.05f, "NoLoop", "Continue");                            
+                        }else if (Main.level_count < 20){
+                            s = new Sprite("Textures/Tiles/" + Main.invis_tiles[4], "invis_tile", assetManager, true, true, 21, 1, 0.05f, "Loop", "Continue");                            
+                        }
                         library.addSprite(s);
                         ((Node)l.getChild(i)).attachChild(s.getNode());
                         /*Texture2D t = (Texture2D) assetManager.loadTexture("Textures/Tiles/ground.png");
@@ -407,9 +453,25 @@ public class LevelState extends AbstractAppState {
             }
 
             if(!ending_node.getControl(GhostControl.class).getOverlappingObjects().isEmpty()){
-                System.out.println("DONE!!!!");
                 app.getInputManager().removeListener(actionListener);
                 complete = true;
+                String userHome = System.getProperty("user.home");
+                File file = new File(userHome+"/KnightGame/levels.j3o");
+                File times = new File(userHome+"/KnightGame/time.j3o");
+                BinaryExporter exporter = BinaryExporter.getInstance();
+                Node level_count = new Node("level_count");
+                level_count.setUserData("Count", Main.level_count+1);
+                Node time = new Node("time");
+                time.setUserData("time", Float.parseFloat(time_l.getText()));
+                try {
+                    exporter.save(level_count, file);
+                    exporter.save(time, times);
+                    System.out.println("SAVING");
+                    System.out.println("COUNT: " + level_count.getUserData("Count"));
+                } catch (IOException ex) {
+                    
+                    Logger.getLogger(LevelState.class.getName()).log(Level.SEVERE, null, ex);
+                }
                 stateManager.detach(stateManager.getState(LevelState.class));
             }
         }
@@ -441,25 +503,11 @@ public class LevelState extends AbstractAppState {
     @Override
     public void cleanup() {
         super.cleanup();
-        System.out.println("CLEANING");
         if(complete){
-            String userHome = System.getProperty("user.home");
-            File file = new File(userHome+"/KnightGame/levels.j3o");
-            File times = new File(userHome+"/KnightGame/time.j3o");
-            BinaryExporter exporter = BinaryExporter.getInstance();
-            Node level_count = new Node("level_count");
-            level_count.setUserData("Count", Main.level_count+1);
-            Node time = new Node("time");
-            time.setUserData("time", Float.parseFloat(time_l.getText()));
-            try {
-                exporter.save(level_count, file);
-                exporter.save(time, times);
-            } catch (IOException ex) {
-                Logger.getLogger(LevelState.class.getName()).log(Level.SEVERE, null, ex);
-            }
-
-            if(Main.level_count+1 != Main.LEVELS){
-                Main.level_count +=1;
+            
+            Main.level_count +=1;
+            if(Main.level_count != Main.LEVELS){
+                
 
                 
                 stateManager.detach(bas);
@@ -477,19 +525,22 @@ public class LevelState extends AbstractAppState {
                 LevelState level_state = new LevelState(screen);
                 stateManager.attach(level_state);
             } else {
-                Main.level_count-=1;
                 for(int i = 0; i < title_elements.length; i++){
                     screen.removeElement(title_elements[i]);
                 }
+                Main.current_time = Float.parseFloat(time_l.getText());
                 screen.removeElement(time_info_l);
                 screen.removeElement(time_l);
                 screen.removeElement(pause_l);
                 stateManager.detach(bas);
                 rootNode.detachAllChildren();
+                
                 CreditsState credits = new CreditsState(screen);
                 stateManager.attach(credits);
+                Main.bg.stop();
             }
         } else {
+            
             for(int i = 0; i < title_elements.length; i++){
                 screen.removeElement(title_elements[i]);
             }
@@ -499,9 +550,11 @@ public class LevelState extends AbstractAppState {
             stateManager.detach(bas);
             bas = new BulletAppState();
             stateManager.attach(bas);
-            bas.setDebugEnabled(true);
+            bas.setDebugEnabled(false);
             rootNode.detachAllChildren();
-            complete = false;
+            //complete = false;
+            Main.bg.stop();
+            System.out.println(stateManager.getState(MainMenuState.class));
             MainMenuState main_state = new MainMenuState(screen);
             stateManager.attach(main_state);
         }
@@ -535,15 +588,17 @@ public class LevelState extends AbstractAppState {
     }
 
     private void createMappings() {
-        app.getInputManager().addMapping("Left",  new KeyTrigger(KeyInput.KEY_A), 
-                                 new KeyTrigger(KeyInput.KEY_LEFT)); // A and left arrow
-        app.getInputManager().addMapping("Right", new KeyTrigger(KeyInput.KEY_D), 
-                                 new KeyTrigger(KeyInput.KEY_RIGHT)); // D and right arrow
-        app.getInputManager().addMapping("Jump", new KeyTrigger(KeyInput.KEY_W), 
-                                 new KeyTrigger(KeyInput.KEY_UP)); // D and right arrow
-        app.getInputManager().addMapping("Pause", new KeyTrigger(KeyInput.KEY_P));
+            app.getInputManager().addMapping("Left",  new KeyTrigger(KeyInput.KEY_A), 
+                                     new KeyTrigger(KeyInput.KEY_LEFT)); // A and left arrow
+            app.getInputManager().addMapping("Right", new KeyTrigger(KeyInput.KEY_D), 
+                                     new KeyTrigger(KeyInput.KEY_RIGHT)); // D and right arrow
+            app.getInputManager().addMapping("Jump", new KeyTrigger(KeyInput.KEY_W), 
+                                     new KeyTrigger(KeyInput.KEY_UP)); // D and right arrow
+            app.getInputManager().addMapping("Pause", new KeyTrigger(KeyInput.KEY_P));
+
+
+            app.getInputManager().addListener(actionListener, new String[]{"Left", "Right","Jump","Pause"});
         
-        app.getInputManager().addListener(actionListener, new String[]{"Left", "Right","Jump","Pause"});
     }
 
     private void setupCollidables() {

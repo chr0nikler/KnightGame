@@ -4,7 +4,7 @@
   <image source="Tiles/transparent.png" trans="ff00ff" width="32" height="32"/>
  </tileset>
  <tileset firstgid="2" name="tilesheet" tilewidth="32" tileheight="32">
-  <image source="Tiles/tilesheet.png" trans="ff00ff" width="128" height="32"/>
+  <image source="Tiles/tilesheet.png" trans="ff00ff" width="160" height="32"/>
  </tileset>
  <layer name="Floor" width="26" height="20">
   <data>
@@ -112,10 +112,10 @@
    <tile gid="0"/>
    <tile gid="0"/>
    <tile gid="0"/>
-   <tile gid="4"/>
-   <tile gid="4"/>
-   <tile gid="4"/>
-   <tile gid="4"/>
+   <tile gid="6"/>
+   <tile gid="6"/>
+   <tile gid="6"/>
+   <tile gid="6"/>
    <tile gid="0"/>
    <tile gid="0"/>
    <tile gid="0"/>
@@ -519,15 +519,15 @@
    <tile gid="0"/>
    <tile gid="1"/>
    <tile gid="1"/>
-   <tile gid="4"/>
-   <tile gid="4"/>
-   <tile gid="4"/>
-   <tile gid="4"/>
-   <tile gid="4"/>
-   <tile gid="4"/>
-   <tile gid="4"/>
-   <tile gid="4"/>
-   <tile gid="4"/>
+   <tile gid="6"/>
+   <tile gid="6"/>
+   <tile gid="6"/>
+   <tile gid="6"/>
+   <tile gid="6"/>
+   <tile gid="6"/>
+   <tile gid="6"/>
+   <tile gid="6"/>
+   <tile gid="6"/>
   </data>
  </layer>
  <objectgroup name="Collision" width="26" height="20">

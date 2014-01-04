@@ -17,6 +17,7 @@ import com.jme3.math.Vector2f;
 import com.jme3.math.Vector4f;
 import tonegod.gui.controls.buttons.ButtonAdapter;
 import tonegod.gui.controls.text.Label;
+import tonegod.gui.controls.windows.DialogBox;
 import tonegod.gui.controls.windows.Panel;
 import tonegod.gui.controls.windows.Window;
 import tonegod.gui.core.Element;
@@ -45,7 +46,7 @@ public class PauseState extends AbstractAppState {
     
     
     @Override
-    public void initialize(AppStateManager stateManager, Application app) {
+    public void initialize(final AppStateManager stateManager, Application app) {
         super.initialize(stateManager, app);
         //TODO: initialize your AppState, e.g. attach spatials to rootNode
         //this is called on the OpenGL thread after the AppState has been attached
@@ -58,13 +59,13 @@ public class PauseState extends AbstractAppState {
         window.center();
         window.setFontSize(fontSize * 1.5f);
         window.setTextAlign(BitmapFont.Align.Center);
-        screen.addElement(window);
+       
         
         
                 
        
         
-        Label title = new Label(screen, "pause_title", new Vector2f(0,0), new Vector2f(300,0));
+        Label title = new Label(screen, "pause_title", new Vector2f(0,0), new Vector2f(200,0));
         title.setText("Game Paused");
         window.addChild(title);
         title.setFont("Interface/Fonts/HumboldtFraktur.fnt");
@@ -143,13 +144,15 @@ public class PauseState extends AbstractAppState {
 
         };
         
-       // quit_button.setPosition(20,20);
+        quit_button.setPosition(20,20);
         window.addChild(quit_button);
         quit_button.setText("Quit");
         quit_button.setFont("Interface/Fonts/HumboldtFraktur.fnt");
         quit_button.setFontSize(fontSize);
         quit_button.setTextPosition(0f,0);
         quit_button.setTextAlign(BitmapFont.Align.Center);
+        
+        System.out.println(quit_button.getDimensions());
         
         //quit_button.setTextVAlign(BitmapFont.VAlign.Top);
         
@@ -158,20 +161,23 @@ public class PauseState extends AbstractAppState {
         main_button = new ButtonAdapter(screen,"main", new Vector2f(0, 0), new Vector2f(screen.getWidth()/10, screen.getHeight()/15)) {
             @Override
             public void onButtonMouseLeftUp(MouseButtonEvent evt, boolean toggled) {
-                home = true;
+                quit = true;
                 app.getInputManager().removeListener(actionListener);
-                app.getStateManager().detach(app.getStateManager().getState(PauseState.class));
+                stateManager.detach(stateManager.getState(PauseState.class));
                 //throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
             } 
         };
-        main_button.setText("Home");
         main_button.setPosition(window.getWidth()-main_button.getWidth()-20,20);
+        window.addChild(main_button);
+        main_button.setText("Home");
         main_button.setFont("Interface/Fonts/HumboldtFraktur.fnt");
         main_button.setFontSize(fontSize);
         main_button.setTextPosition(0f,0);
         main_button.setTextAlign(BitmapFont.Align.Center);
         //quit_button.setTextVAlign(BitmapFont.VAlign.Top);
-        window.addChild(main_button);
+        
+        
+        screen.addElement(window);
         
         createMappings();
         
@@ -188,9 +194,6 @@ public class PauseState extends AbstractAppState {
         super.cleanup();
         screen.removeElement(window);
         if(quit){
-            stateManager.detach(stateManager.getState(LevelState.class));
-        } else if(home){
-            System.out.println("HERE");
             stateManager.detach(stateManager.getState(LevelState.class));
         } else{
             stateManager.getState(LevelState.class).setEnabled(true);
